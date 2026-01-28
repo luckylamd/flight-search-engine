@@ -2,6 +2,7 @@
 
 import { type NormalizedFlight } from "@/lib/api/amadeus";
 import { AirlineLogo } from "./AirlineLogo";
+import { useMemo, useState } from "react";
 
 type FlightResultsProps = {
   flights: NormalizedFlight[];
@@ -16,6 +17,15 @@ function formatTime(isoString: string): string {
     minute: "2-digit",
     hour12: true,
   });
+}
+
+function formatDurationMinutes(minutes?: number): string | null {
+  if (!minutes || minutes <= 0) return null;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  const hs = h > 0 ? `${h} hr` : "";
+  const ms = m > 0 ? `${m} min` : "";
+  return `${hs} ${ms}`.trim();
 }
 
 function getCurrencySymbol(currencyCode: string): string {
@@ -58,6 +68,12 @@ function getCurrencySymbol(currencyCode: string): string {
 }
 
 export function FlightResults({ flights, isLoading }: FlightResultsProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const toggleExpanded = (id: string) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+  };
+
   if (isLoading) {
     return (
       <div className="w-full max-w-6xl mx-auto">
@@ -100,12 +116,16 @@ export function FlightResults({ flights, isLoading }: FlightResultsProps) {
   return (
     <div className="w-full max-w-6xl mx-auto space-y-3">
       {flights.map((flight) => (
-        <div
-          key={flight.id}
-          className="group bg-white rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:shadow-lg transition-all duration-200 overflow-hidden"
-        >
-          <div className="p-4 sm:p-5">
-            <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6">
+        <div key={flight.id} className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => toggleExpanded(flight.id)}
+            className="w-full text-left hover:bg-gray-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+            aria-expanded={expandedId === flight.id}
+            aria-controls={`flight-details-${flight.id}`}
+          >
+            <div className="p-4 sm:p-5">
+              <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6">
               {/* Left: Flight details */}
               <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
                 {/* Airline Logo */}
@@ -178,9 +198,118 @@ export function FlightResults({ flights, isLoading }: FlightResultsProps) {
               </div>
             </div>
           </div>
+          </button>
+
+          {/* Expandable details */}
+          <div
+            id={`flight-details-${flight.id}`}
+            className={`grid transition-[grid-template-rows] duration-200 ${
+              expandedId === flight.id ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+            }`}
+          >
+            <div className="overflow-hidden">
+              <div className="border-t border-gray-200 bg-white px-4 sm:px-5 py-4">
+                {flight.segments && flight.segments.length > 0 ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Timeline */}
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                      <p className="text-sm font-semibold text-gray-900 mb-3">
+                        Trip details
+                      </p>
+
+                      <div className="space-y-4">
+                        {flight.segments.map((seg, idx) => {
+                          const layover = formatDurationMinutes(seg.layoverMinutesAfter);
+                          return (
+                            <div key={`${seg.from}-${seg.to}-${idx}`}>
+                              <div className="flex gap-3">
+                                {/* Timeline dots/line */}
+                                <div className="flex flex-col items-center">
+                                  <div className="h-2 w-2 rounded-full bg-blue-600 mt-1.5" />
+                                  {idx < flight.segments!.length - 1 ? (
+                                    <div className="w-px flex-1 bg-gray-300 mt-1" />
+                                  ) : null}
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <p className="text-sm font-semibold text-gray-900">
+                                      {formatTime(seg.departAt)} · {seg.from}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {seg.flightNumber ?? flight.flightNumber ?? ""}
+                                    </p>
+                                  </div>
+                                  <p className="text-xs text-gray-600 mt-0.5">
+                                    Arrive {formatTime(seg.arriveAt)} · {seg.to}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {layover ? (
+                                <div className="ml-5 mt-2 text-xs text-gray-600">
+                                  {layover} layover · {seg.to}
+                                </div>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Quick summary */}
+                    <div className="rounded-xl border border-gray-200 bg-white p-4">
+                      <p className="text-sm font-semibold text-gray-900 mb-3">
+                        Summary
+                      </p>
+                      <dl className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <dt className="text-xs uppercase tracking-wide text-gray-500">
+                            Total duration
+                          </dt>
+                          <dd className="font-semibold text-gray-900">{flight.duration}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs uppercase tracking-wide text-gray-500">
+                            Stops
+                          </dt>
+                          <dd className="font-semibold text-gray-900">
+                            {flight.stops === 0 ? "Nonstop" : `${flight.stops}`}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs uppercase tracking-wide text-gray-500">
+                            Route
+                          </dt>
+                          <dd className="font-semibold text-gray-900">
+                            {flight.origin} → {flight.destination}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs uppercase tracking-wide text-gray-500">
+                            Price
+                          </dt>
+                          <dd className="font-semibold text-gray-900">
+                            {getCurrencySymbol(flight.currency)}
+                            {Math.round(flight.price)} / person
+                          </dd>
+                        </div>
+                      </dl>
+                      <p className="mt-3 text-xs text-gray-500">
+                        Click the row again to collapse.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-600">
+                    No segment details available for this result.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-      ))
-      }
-    </div >
+      ))}
+    </div>
   );
 }

@@ -32,8 +32,19 @@ type AmadeusFlightOffer = {
       number?: string;
       departure: { at: string; iataCode: string };
       arrival: { at: string; iataCode: string };
+      aircraft?: { code?: string };
     }>;
   }>;
+};
+
+export type NormalizedSegment = {
+  from: string;
+  to: string;
+  departAt: string;
+  arriveAt: string;
+  flightNumber?: string;
+  aircraftCode?: string;
+  layoverMinutesAfter?: number; // minutes between this segment arrival and next segment departure
 };
 
 export type NormalizedFlight = {
@@ -44,6 +55,7 @@ export type NormalizedFlight = {
   flightNumber?: string;
   stops: number;
   stopLocations?: string[]; // Airport codes for layover stops
+  segments?: NormalizedSegment[];
   duration: string;
   origin: string;
   destination: string;
@@ -63,6 +75,14 @@ function formatDuration(duration: string): string {
   const hours = match[1] ? `${match[1]}h` : "";
   const minutes = match[2] ? `${match[2]}m` : "";
   return `${hours} ${minutes}`.trim() || duration;
+}
+
+function diffMinutes(aIso: string, bIso: string): number | null {
+  const a = new Date(aIso).getTime();
+  const b = new Date(bIso).getTime();
+  if (Number.isNaN(a) || Number.isNaN(b)) return null;
+  const diff = Math.round((b - a) / 60000);
+  return Number.isFinite(diff) ? diff : null;
 }
 
 export async function searchFlights(opts: {
@@ -113,6 +133,23 @@ export async function searchFlights(opts: {
           }
         }
 
+        const segments: NormalizedSegment[] = itinerary.segments.map((seg, idx) => {
+          const next = itinerary.segments[idx + 1];
+          const layoverMinutesAfter =
+            next && seg?.arrival?.at && next?.departure?.at
+              ? diffMinutes(seg.arrival.at, next.departure.at) ?? undefined
+              : undefined;
+          return {
+            from: seg.departure.iataCode,
+            to: seg.arrival.iataCode,
+            departAt: seg.departure.at,
+            arriveAt: seg.arrival.at,
+            flightNumber: seg.number,
+            aircraftCode: seg.aircraft?.code,
+            layoverMinutesAfter,
+          };
+        });
+
         return {
           id: offer.id,
           price: priceNumber,
@@ -121,6 +158,7 @@ export async function searchFlights(opts: {
           flightNumber: firstSegment.number,
           stops,
           stopLocations: stopLocations.length > 0 ? stopLocations : undefined,
+          segments: segments.length > 0 ? segments : undefined,
           duration: formatDuration(itinerary.duration),
           origin: firstSegment.departure.iataCode,
           destination: lastSegment.arrival.iataCode,
