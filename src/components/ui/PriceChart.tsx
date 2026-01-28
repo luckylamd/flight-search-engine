@@ -85,7 +85,57 @@ export function PriceChart({
     const min = Math.min(...prices);
     const max = Math.max(...prices);
     const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
-    return { min, max, avg: Math.round(avg) };
+    
+    // Calculate price range indicators for booking advice
+    const sortedPrices = [...prices].sort((a, b) => a - b);
+    const q25Index = Math.floor(sortedPrices.length * 0.25);
+    const q75Index = Math.floor(sortedPrices.length * 0.75);
+    const q25 = sortedPrices[q25Index] || min;
+    const q75 = sortedPrices[q75Index] || max;
+    
+    // Determine price status
+    let priceStatus: "low" | "typical" | "high";
+    let statusMessage: string;
+    let statusColor: string;
+    let statusBg: string;
+    
+    if (avg <= q25 * 1.1) {
+      // Average is close to or below 25th percentile - prices are low
+      priceStatus = "low";
+      statusMessage = "Prices are currently low";
+      statusColor = "text-green-700";
+      statusBg = "bg-green-50 border-green-200";
+    } else if (avg >= q75 * 0.9) {
+      // Average is close to or above 75th percentile - prices are high
+      priceStatus = "high";
+      statusMessage = "Prices are currently high";
+      statusColor = "text-red-700";
+      statusBg = "bg-red-50 border-red-200";
+    } else {
+      // Average is in the middle range - prices are typical
+      priceStatus = "typical";
+      statusMessage = "Prices are typical";
+      statusColor = "text-blue-700";
+      statusBg = "bg-blue-50 border-blue-200";
+    }
+    
+    // Calculate savings potential
+    const savingsPotential = Math.round(avg - min);
+    const savingsPercent = Math.round(((avg - min) / avg) * 100);
+    
+    return { 
+      min, 
+      max, 
+      avg: Math.round(avg),
+      q25,
+      q75,
+      priceStatus,
+      statusMessage,
+      statusColor,
+      statusBg,
+      savingsPotential,
+      savingsPercent,
+    };
   }, [chartData]);
 
   const dateLabel = useMemo(() => {
@@ -112,6 +162,47 @@ export function PriceChart({
 
       {stats ? (
         <>
+          {/* Best Time to Book Indicator */}
+          <div className={`mb-5 rounded-xl border-2 ${stats.statusBg} p-4`}>
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                {stats.priceStatus === "low" ? (
+                  <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                ) : stats.priceStatus === "high" ? (
+                  <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </div>
+              <div className="flex-1">
+                <p className={`text-sm font-semibold ${stats.statusColor} mb-1`}>
+                  {stats.statusMessage}
+                </p>
+                {stats.priceStatus === "high" && stats.savingsPotential > 0 && (
+                  <p className="text-xs text-gray-600">
+                    You could save up to {currencySymbol}{stats.savingsPotential} ({stats.savingsPercent}%) by booking flights during cheaper hours
+                  </p>
+                )}
+                {stats.priceStatus === "low" && (
+                  <p className="text-xs text-gray-600">
+                    Good time to book! Prices are below typical range for this route
+                  </p>
+                )}
+                {stats.priceStatus === "typical" && (
+                  <p className="text-xs text-gray-600">
+                    Prices are within typical range. Consider booking during off-peak hours for better deals
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Stats cards - enhanced */}
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="rounded-xl border-2 border-gray-200 bg-gradient-to-br from-green-50 to-white p-4">
