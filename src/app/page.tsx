@@ -36,7 +36,9 @@ export default function Home() {
   const [activeFilterType, setActiveFilterType] = useState<
     "stops" | "price" | "airlines" | null
   >(null);
-  const [sortBy, setSortBy] = useState<"price" | "duration" | "stops">("price");
+  const [sortBy, setSortBy] = useState<
+    "bestValue" | "cheapest" | "fastest" | "fewestStops"
+  >("bestValue");
 
   // Apply filters to flights
   const filteredFlights = useMemo(() => {
@@ -63,17 +65,55 @@ export default function Home() {
     }
 
     // Sort
-    result.sort((a, b) => {
-      if (sortBy === "price") return a.price - b.price;
-      if (sortBy === "stops") return a.stops - b.stops;
-      // duration sort: parse rough minutes from "2h 30m"
-      const toMinutes = (s: string) => {
-        const h = s.match(/(\d+)h/);
-        const m = s.match(/(\d+)m/);
-        return (h ? Number(h[1]) * 60 : 0) + (m ? Number(m[1]) : 0);
+    // Helper function to parse duration to minutes
+    const toMinutes = (s: string) => {
+      const h = s.match(/(\d+)h/);
+      const m = s.match(/(\d+)m/);
+      return (h ? Number(h[1]) * 60 : 0) + (m ? Number(m[1]) : 0);
+    };
+
+    if (sortBy === "cheapest") {
+      result.sort((a, b) => a.price - b.price);
+    } else if (sortBy === "fastest") {
+      result.sort((a, b) => toMinutes(a.duration) - toMinutes(b.duration));
+    } else if (sortBy === "fewestStops") {
+      result.sort((a, b) => a.stops - b.stops);
+    } else if (sortBy === "bestValue") {
+      // Best value: combines price, duration, and stops into a score
+      // Lower score = better value
+      // Normalize values (0-1 scale) for comparison based on all flights
+      const prices = allFlights.map((f) => f.price);
+      const durations = allFlights.map((f) => toMinutes(f.duration));
+      const maxPrice = Math.max(...prices);
+      const minPrice = Math.min(...prices);
+      const maxDuration = Math.max(...durations);
+      const minDuration = Math.min(...durations);
+      const maxStops = Math.max(...allFlights.map((f) => f.stops));
+      
+      const normalizePrice = (price: number) => {
+        const range = maxPrice - minPrice;
+        return range > 0 ? (price - minPrice) / range : 0;
       };
-      return toMinutes(a.duration) - toMinutes(b.duration);
-    });
+      
+      const normalizeDuration = (duration: number) => {
+        const range = maxDuration - minDuration;
+        return range > 0 ? (duration - minDuration) / range : 0;
+      };
+      
+      const normalizeStops = (stops: number) => {
+        return maxStops > 0 ? stops / maxStops : 0;
+      };
+      
+      // Calculate value score: 60% weight on price, 30% on duration, 10% on stops
+      const getValueScore = (flight: (typeof result)[0]) => {
+        const priceScore = normalizePrice(flight.price) * 0.6;
+        const durationScore = normalizeDuration(toMinutes(flight.duration)) * 0.3;
+        const stopsScore = normalizeStops(flight.stops) * 0.1;
+        return priceScore + durationScore + stopsScore;
+      };
+      
+      result.sort((a, b) => getValueScore(a) - getValueScore(b));
+    }
 
     return result;
   }, [allFlights, filters, sortBy]);
@@ -227,13 +267,20 @@ export default function Home() {
             <select
               value={sortBy}
               onChange={(e) =>
-                setSortBy(e.target.value as "price" | "duration" | "stops")
+                setSortBy(
+                  e.target.value as
+                    | "bestValue"
+                    | "cheapest"
+                    | "fastest"
+                    | "fewestStops",
+                )
               }
               className="h-10 px-4 rounded-lg border-2 border-gray-300 bg-white text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
             >
-              <option value="price">Sort: Price</option>
-              <option value="duration">Sort: Duration</option>
-              <option value="stops">Sort: Stops</option>
+              <option value="bestValue">Sort: Best value</option>
+              <option value="cheapest">Sort: Cheapest</option>
+              <option value="fastest">Sort: Fastest</option>
+              <option value="fewestStops">Sort: Fewest stops</option>
             </select>
           </div>
         </>
