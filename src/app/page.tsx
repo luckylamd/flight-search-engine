@@ -1,66 +1,271 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+
+import { useState, useMemo } from "react";
+import {
+  SearchPanel,
+  type SearchFormValues,
+} from "@/components/ui/SearchPanel";
+import {
+  PriceChart,
+  type HourlyPricePoint,
+} from "@/components/ui/PriceChart";
+import { FlightResults } from "@/components/ui/FlightResults";
+import { type FilterState } from "@/components/ui/Filters";
+import { FilterChips } from "@/components/ui/FilterChips";
+import { type NormalizedFlight } from "@/lib/api/amadeus";
 
 export default function Home() {
+  const [search, setSearch] = useState<SearchFormValues>({
+    origin: "NYC",
+    destination: "LON",
+    departureDate: new Date().toISOString().slice(0, 10),
+    adults: 1,
+  });
+
+  const [allFlights, setAllFlights] = useState<NormalizedFlight[]>([]);
+  const [allHourlyPrices, setAllHourlyPrices] = useState<HourlyPricePoint[] | null>(
+    null,
+  );
+  const [filters, setFilters] = useState<FilterState>({
+    stops: null,
+    priceRange: null,
+    airlines: [],
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [activeFilterType, setActiveFilterType] = useState<
+    "stops" | "price" | "airlines" | null
+  >(null);
+  const [sortBy, setSortBy] = useState<"price" | "duration" | "stops">("price");
+
+  // Apply filters to flights
+  const filteredFlights = useMemo(() => {
+    let result = [...allFlights];
+
+    // Filter by stops
+    if (filters.stops !== null) {
+      if (filters.stops === 2) {
+        result = result.filter((f) => f.stops >= 2);
+      } else {
+        result = result.filter((f) => f.stops === filters.stops);
+      }
+    }
+
+    // Filter by price range
+    if (filters.priceRange) {
+      const [min, max] = filters.priceRange;
+      result = result.filter((f) => f.price >= min && f.price <= max);
+    }
+
+    // Filter by airlines
+    if (filters.airlines.length > 0) {
+      result = result.filter((f) => filters.airlines.includes(f.airline));
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      if (sortBy === "price") return a.price - b.price;
+      if (sortBy === "stops") return a.stops - b.stops;
+      // duration sort: parse rough minutes from "2h 30m"
+      const toMinutes = (s: string) => {
+        const h = s.match(/(\d+)h/);
+        const m = s.match(/(\d+)m/);
+        return (h ? Number(h[1]) * 60 : 0) + (m ? Number(m[1]) : 0);
+      };
+      return toMinutes(a.duration) - toMinutes(b.duration);
+    });
+
+    return result;
+  }, [allFlights, filters, sortBy]);
+
+  // Compute hourly prices from filtered flights
+  const filteredHourlyPrices = useMemo(() => {
+    if (filteredFlights.length === 0) {
+      return allHourlyPrices ?? [];
+    }
+
+    const buckets = new Map<number, { total: number; count: number }>();
+
+    for (const flight of filteredFlights) {
+      const d = new Date(flight.departureTime);
+      const hour = Number.isNaN(d.getTime()) ? 0 : d.getUTCHours();
+      const current = buckets.get(hour) ?? { total: 0, count: 0 };
+      current.total += flight.price;
+      current.count += 1;
+      buckets.set(hour, current);
+    }
+
+    return Array.from({ length: 24 }, (_, h) => {
+      const bucket = buckets.get(h);
+      const avg = bucket && bucket.count > 0 ? bucket.total / bucket.count : 0;
+      return {
+        hour: `${String(h).padStart(2, "0")}:00`,
+        price: Number.isFinite(avg) ? Math.round(avg) : 0,
+      };
+    });
+  }, [filteredFlights, allHourlyPrices]);
+
+  const handleSearch = (values: SearchFormValues) => {
+    setSearch(values);
+    setIsLoading(true);
+    setError(null);
+
+    const params = new URLSearchParams({
+      origin: values.origin,
+      destination: values.destination,
+      departureDate: values.departureDate,
+      adults: String(values.adults),
+    });
+
+    fetch(`/api/flights?${params.toString()}`)
+      .then(async (res) => {
+        if (!res.ok) {
+          const body = (await res.json().catch(() => null)) as
+            | { error?: string }
+            | null;
+          throw new Error(body?.error ?? "Request failed");
+        }
+        return res.json() as Promise<{
+          flights: NormalizedFlight[];
+          hourlyPrices: HourlyPricePoint[];
+        }>;
+      })
+      .then((data) => {
+        setAllFlights(data.flights);
+        setAllHourlyPrices(data.hourlyPrices);
+        // Reset filters when new search is performed
+        setFilters({
+          stops: null,
+          priceRange: null,
+          airlines: [],
+        });
+        setActiveFilterType(null);
+      })
+      .catch((err: unknown) => {
+        const message =
+          err instanceof Error ? err.message : "Something went wrong";
+        setError(message);
+        setAllFlights([]);
+        setAllHourlyPrices(null);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
+
+  const handleResetFilters = () => {
+    setFilters({
+      stops: null,
+      priceRange: null,
+      airlines: [],
+    });
+    setActiveFilterType(null);
+  };
+
+  const handleClearFilter = (filterType: "stops" | "price" | "airlines") => {
+    setFilters((prev) => {
+      if (filterType === "stops") return { ...prev, stops: null };
+      if (filterType === "price") return { ...prev, priceRange: null };
+      return { ...prev, airlines: [] };
+    });
+    // If the cleared filter's dropdown is open, close it
+    setActiveFilterType((prev) => (prev === filterType ? null : prev));
+  };
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 py-8 px-4">
+      {/* Header */}
+      <div className="w-full max-w-6xl mx-auto mb-8">
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-3 tracking-tight">
+          Flight Search Engine
+        </h1>
+      </div>
+
+      {/* Search Panel */}
+      <SearchPanel
+        defaultValues={search}
+        onSearch={handleSearch}
+        isLoading={isLoading}
+      />
+
+      {/* Error message */}
+      {error ? (
+        <div className="w-full max-w-6xl mx-auto mb-5 rounded-xl border-2 border-red-300 bg-red-50 px-5 py-4 text-sm text-red-800 shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold">Error:</span>
+            <span>{error}</span>
+          </div>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      ) : null}
+
+      {/* Filter Chips Row */}
+      {allFlights.length > 0 && (
+        <>
+          <FilterChips
+            filters={filters}
+            flights={allFlights}
+            onFilterClick={setActiveFilterType}
+            onFilterChange={setFilters}
+            onClearFilter={handleClearFilter}
+            onReset={handleResetFilters}
+            activeFilterType={activeFilterType}
+          />
+
+          {/* Results header with sort */}
+          <div className="w-full max-w-6xl mx-auto mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-sm text-gray-600">
+              Showing{" "}
+              <span className="font-bold text-gray-900 text-base">
+                {filteredFlights.length}
+              </span>{" "}
+              of{" "}
+              <span className="font-bold text-gray-900 text-base">
+                {allFlights.length}
+              </span>{" "}
+              flights
+            </p>
+            <select
+              value={sortBy}
+              onChange={(e) =>
+                setSortBy(e.target.value as "price" | "duration" | "stops")
+              }
+              className="h-10 px-4 rounded-lg border-2 border-gray-300 bg-white text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+            >
+              <option value="price">Sort: Price</option>
+              <option value="duration">Sort: Duration</option>
+              <option value="stops">Sort: Stops</option>
+            </select>
+          </div>
+        </>
+      )}
+
+      {/* Price Chart */}
+      <PriceChart
+        origin={search.origin}
+        destination={search.destination}
+        departureDate={search.departureDate}
+        data={filteredHourlyPrices}
+        currency={
+          allFlights.length > 0 ? allFlights[0].currency : undefined
+        }
+      />
+
+      {/* Flight Results */}
+      {allFlights.length > 0 && (
+        <FlightResults flights={filteredFlights} isLoading={isLoading} />
+      )}
+
+      {/* Loading state */}
+      {isLoading && allFlights.length === 0 ? (
+        <div className="w-full max-w-6xl mx-auto mt-8 text-center">
+          <div className="inline-flex items-center gap-3 px-6 py-4 bg-white rounded-xl border-2 border-gray-200 shadow-sm">
+            <span className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full" />
+            <p className="text-sm font-semibold text-gray-700">
+              Loading live prices from Amadeus…
+            </p>
+          </div>
         </div>
-      </main>
-    </div>
+      ) : null}
+    </main>
   );
 }
