@@ -26,6 +26,13 @@ type AmadeusFlightOffer = {
   };
   validatingAirlineCodes?: string[];
   numberOfBookableSeats?: number;
+  travelerPricings?: Array<{
+    fareDetailsBySegment?: Array<{
+      cabin?: string; // e.g. ECONOMY, BUSINESS
+      brandedFare?: string; // e.g. BASIC_ECONOMY, ECONOMY, STANDARD
+      class?: string; // booking class
+    }>;
+  }>;
   itineraries: Array<{
     duration: string;
     segments: Array<{
@@ -56,6 +63,8 @@ export type NormalizedFlight = {
   stops: number;
   stopLocations?: string[]; // Airport codes for layover stops
   segments?: NormalizedSegment[];
+  cabin?: string;
+  fareType?: "Basic economy" | "Standard" | "Unknown";
   duration: string;
   origin: string;
   destination: string;
@@ -83,6 +92,14 @@ function diffMinutes(aIso: string, bIso: string): number | null {
   if (Number.isNaN(a) || Number.isNaN(b)) return null;
   const diff = Math.round((b - a) / 60000);
   return Number.isFinite(diff) ? diff : null;
+}
+
+function normalizeFareType(input?: string): "Basic economy" | "Standard" | "Unknown" {
+  if (!input) return "Unknown";
+  const s = input.toUpperCase();
+  if (s.includes("BASIC")) return "Basic economy";
+  if (s.includes("STANDARD") || s.includes("ECONOMY") || s.includes("FLEX")) return "Standard";
+  return "Unknown";
 }
 
 export async function searchFlights(opts: {
@@ -150,6 +167,12 @@ export async function searchFlights(opts: {
           };
         });
 
+        const cabin =
+          offer.travelerPricings?.[0]?.fareDetailsBySegment?.[0]?.cabin ?? undefined;
+        const brandedFare =
+          offer.travelerPricings?.[0]?.fareDetailsBySegment?.[0]?.brandedFare ?? undefined;
+        const fareType = normalizeFareType(brandedFare);
+
         return {
           id: offer.id,
           price: priceNumber,
@@ -159,6 +182,8 @@ export async function searchFlights(opts: {
           stops,
           stopLocations: stopLocations.length > 0 ? stopLocations : undefined,
           segments: segments.length > 0 ? segments : undefined,
+          cabin,
+          fareType,
           duration: formatDuration(itinerary.duration),
           origin: firstSegment.departure.iataCode,
           destination: lastSegment.arrival.iataCode,

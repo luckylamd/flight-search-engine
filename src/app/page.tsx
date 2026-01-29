@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   SearchPanel,
   type SearchFormValues,
@@ -13,13 +13,23 @@ import { FlightResults } from "@/components/ui/FlightResults";
 import { type FilterState } from "@/components/ui/Filters";
 import { FilterChips } from "@/components/ui/FilterChips";
 import { type NormalizedFlight } from "@/lib/api/amadeus";
+import {
+  loadSettings,
+  saveSettings,
+  SettingsPanel,
+  type AppSettings,
+} from "@/components/ui/SettingsPanel";
+import { STRINGS } from "@/lib/i18n";
+
+// Currency setting removed: always display USD ($)
 
 export default function Home() {
+  const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
+  const t = STRINGS[settings.language];
   const [search, setSearch] = useState<SearchFormValues>({
     origin: "NYC",
     destination: "LON",
     departureDate: new Date().toISOString().slice(0, 10),
-    adults: 1,
   });
 
   const [allFlights, setAllFlights] = useState<NormalizedFlight[]>([]);
@@ -39,6 +49,7 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<
     "bestValue" | "cheapest" | "fastest" | "fewestStops"
   >("bestValue");
+  const [showAllResults, setShowAllResults] = useState(false);
 
   // Apply filters to flights
   const filteredFlights = useMemo(() => {
@@ -118,6 +129,20 @@ export default function Home() {
     return result;
   }, [allFlights, filters, sortBy]);
 
+  useEffect(() => {
+    // Reset "View more" when the result set changes meaningfully
+    setShowAllResults(false);
+  }, [allFlights, filters, sortBy]);
+
+  useEffect(() => {
+    saveSettings(settings);
+  }, [settings]);
+
+  const visibleFlights = useMemo(() => {
+    if (showAllResults) return filteredFlights;
+    return filteredFlights.slice(0, 15);
+  }, [filteredFlights, showAllResults]);
+
   // Compute hourly prices from filtered flights
   const filteredHourlyPrices = useMemo(() => {
     if (filteredFlights.length === 0) {
@@ -154,7 +179,7 @@ export default function Home() {
       origin: values.origin,
       destination: values.destination,
       departureDate: values.departureDate,
-      adults: String(values.adults),
+      adults: "1",
     });
 
     fetch(`/api/flights?${params.toString()}`)
@@ -216,9 +241,12 @@ export default function Home() {
     <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 py-8 px-4">
       {/* Header */}
       <div className="w-full max-w-6xl mx-auto mb-8">
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-3 tracking-tight">
-          Flight Search Engine
-        </h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">
+            {t.title}
+          </h1>
+          <SettingsPanel value={settings} onChange={setSettings} t={t} />
+        </div>
       </div>
 
       {/* Search Panel */}
@@ -226,6 +254,7 @@ export default function Home() {
         defaultValues={search}
         onSearch={handleSearch}
         isLoading={isLoading}
+        t={t}
       />
 
       {/* Error message */}
@@ -249,20 +278,21 @@ export default function Home() {
             onClearFilter={handleClearFilter}
             onReset={handleResetFilters}
             activeFilterType={activeFilterType}
+            t={t}
           />
 
           {/* Results header with sort */}
           <div className="w-full max-w-6xl mx-auto mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <p className="text-sm text-gray-600">
-              Showing{" "}
+              {t.showing}{" "}
               <span className="font-bold text-gray-900 text-base">
                 {filteredFlights.length}
               </span>{" "}
-              of{" "}
+              {t.of}{" "}
               <span className="font-bold text-gray-900 text-base">
                 {allFlights.length}
               </span>{" "}
-              flights
+              {t.flights}
             </p>
             <select
               value={sortBy}
@@ -277,10 +307,10 @@ export default function Home() {
               }
               className="h-10 px-4 rounded-lg border-2 border-gray-300 bg-white text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
             >
-              <option value="bestValue">Sort: Best value</option>
-              <option value="cheapest">Sort: Cheapest</option>
-              <option value="fastest">Sort: Fastest</option>
-              <option value="fewestStops">Sort: Fewest stops</option>
+              <option value="bestValue">{t.sortBest}</option>
+              <option value="cheapest">{t.sortCheapest}</option>
+              <option value="fastest">{t.sortFastest}</option>
+              <option value="fewestStops">{t.sortFewestStops}</option>
             </select>
           </div>
         </>
@@ -292,14 +322,31 @@ export default function Home() {
         destination={search.destination}
         departureDate={search.departureDate}
         data={filteredHourlyPrices}
-        currency={
-          allFlights.length > 0 ? allFlights[0].currency : undefined
-        }
+        currency="USD"
+        t={t}
       />
 
       {/* Flight Results */}
       {allFlights.length > 0 && (
-        <FlightResults flights={filteredFlights} isLoading={isLoading} />
+        <div className="w-full max-w-6xl mx-auto">
+              <FlightResults
+                flights={visibleFlights}
+                isLoading={isLoading}
+            t={t}
+              />
+
+          {filteredFlights.length > 15 && !showAllResults ? (
+            <div className="mt-4 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowAllResults(true)}
+                className="h-10 px-6 rounded-full bg-white border-2 border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors"
+              >
+                {t.viewMore}
+              </button>
+            </div>
+          ) : null}
+        </div>
       )}
 
       {/* Loading state */}

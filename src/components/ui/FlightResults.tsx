@@ -7,6 +7,17 @@ import { useMemo, useState } from "react";
 type FlightResultsProps = {
   flights: NormalizedFlight[];
   isLoading?: boolean;
+  t?: {
+    noFlightsTitle: string;
+    noFlightsSubtitle: string;
+    noSegmentDetails: string;
+    nonstop: string;
+    stop: string;
+    stopsPlural: string;
+    tripDetails: string;
+    travelTime: string;
+    layover: string;
+  };
 };
 
 function formatTime(isoString: string): string {
@@ -28,46 +39,106 @@ function formatDurationMinutes(minutes?: number): string | null {
   return `${hs} ${ms}`.trim();
 }
 
-function getCurrencySymbol(currencyCode: string): string {
-  const currencyMap: Record<string, string> = {
-    EUR: "€",
-    USD: "$",
-    GBP: "£",
-    JPY: "¥",
-    CAD: "C$",
-    AUD: "A$",
-    CHF: "Fr",
-    CNY: "¥",
-    INR: "₹",
-    BRL: "R$",
-    MXN: "$",
-    KRW: "₩",
-    SGD: "S$",
-    HKD: "HK$",
-    NZD: "NZ$",
-    ZAR: "R",
-    SEK: "kr",
-    NOK: "kr",
-    DKK: "kr",
-    PLN: "zł",
-    CZK: "Kč",
-    HUF: "Ft",
-    RON: "lei",
-    TRY: "₺",
-    ILS: "₪",
-    AED: "د.إ",
-    SAR: "﷼",
-    THB: "฿",
-    MYR: "RM",
-    PHP: "₱",
-    IDR: "Rp",
-    VND: "₫",
-  };
-
-  return currencyMap[currencyCode.toUpperCase()] || currencyCode;
+function diffMinutesLocal(aIso: string, bIso: string): number | null {
+  const a = new Date(aIso).getTime();
+  const b = new Date(bIso).getTime();
+  if (Number.isNaN(a) || Number.isNaN(b)) return null;
+  const diff = Math.round((b - a) / 60000);
+  return Number.isFinite(diff) ? diff : null;
 }
 
-export function FlightResults({ flights, isLoading }: FlightResultsProps) {
+function aircraftModelFromCode(code?: string): string | null {
+  if (!code) return null;
+  const map: Record<string, string> = {
+    // Airbus (common)
+    "319": "Airbus A319",
+    "320": "Airbus A320",
+    "321": "Airbus A321",
+    "32N": "Airbus A320neo",
+    "32Q": "Airbus A320neo",
+    "332": "Airbus A330-200",
+    "333": "Airbus A330-300",
+    "338": "Airbus A330-800",
+    "339": "Airbus A330-900",
+    "359": "Airbus A350-900",
+    "35K": "Airbus A350-1000",
+    "388": "Airbus A380",
+
+    // Boeing (common)
+    "737": "Boeing 737",
+    "738": "Boeing 737-800",
+    "73H": "Boeing 737-800",
+    "73G": "Boeing 737-700",
+    "73W": "Boeing 737-700",
+    "73M": "Boeing 737 MAX",
+    "739": "Boeing 737-900",
+    "752": "Boeing 757-200",
+    "753": "Boeing 757-300",
+    "763": "Boeing 767-300",
+    "764": "Boeing 767-400",
+    "772": "Boeing 777-200",
+    "77L": "Boeing 777-200LR",
+    "77W": "Boeing 777-300ER",
+    "788": "Boeing 787-8",
+    "789": "Boeing 787-9",
+    "78X": "Boeing 787-10",
+
+    // Embraer / regional
+    "E70": "Embraer E170",
+    "E75": "Embraer E175",
+    "E90": "Embraer E190",
+    "E95": "Embraer E195",
+    "CR7": "Bombardier CRJ700",
+    "CR9": "Bombardier CRJ900",
+  };
+  const key = code.toUpperCase();
+  return map[key] ?? `Aircraft ${key}`;
+}
+
+function cabinLabel(cabin?: string): string {
+  if (!cabin) return "Cabin: Unknown";
+  const c = cabin.toUpperCase();
+  if (c === "ECONOMY") return "Cabin: Economy";
+  if (c === "PREMIUM_ECONOMY") return "Cabin: Premium economy";
+  if (c === "BUSINESS") return "Cabin: Business";
+  if (c === "FIRST") return "Cabin: First";
+  return `Cabin: ${c}`;
+}
+
+function wifiLabel(): string {
+  // Amadeus Flight Offers Search doesn't expose Wi‑Fi availability directly.
+  // We still show an explicit row so users know to check the airline.
+  return "Wi‑Fi details not provided (check airline)";
+}
+
+function legroomLabel(
+  fareType?: "Basic economy" | "Standard" | "Unknown",
+): { primary: string; secondary?: string } {
+  if (fareType === "Basic economy") {
+    return {
+      primary: "Legroom: Tight (basic economy, estimated)",
+      secondary: "Basic economy often has more restrictive seat selection and may have less legroom.",
+    };
+  }
+  if (fareType === "Standard") {
+    return {
+      primary: "Legroom: Standard (typical economy, estimated)",
+      secondary: "Exact seat pitch varies by airline and aircraft.",
+    };
+  }
+  return {
+    primary: "Legroom: Unknown",
+    secondary: "Detailed legroom information is not available from this data source.",
+  };
+}
+
+function getCurrencySymbol(currencyCode: string): string {
+  // Currency setting removed: always show USD symbol
+  void currencyCode;
+  return "$";
+}
+
+export function FlightResults({ flights, isLoading, t }: FlightResultsProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const toggleExpanded = (id: string) => {
@@ -105,9 +176,11 @@ export function FlightResults({ flights, isLoading }: FlightResultsProps) {
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
           />
         </svg>
-        <p className="text-gray-600 font-medium">No flights found</p>
+        <p className="text-gray-600 font-medium">
+          {t?.noFlightsTitle ?? "No flights found"}
+        </p>
         <p className="text-sm text-gray-500 mt-1">
-          Try adjusting your search criteria or filters
+          {t?.noFlightsSubtitle ?? "Try adjusting your search criteria or filters"}
         </p>
       </div>
     );
@@ -115,7 +188,14 @@ export function FlightResults({ flights, isLoading }: FlightResultsProps) {
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-3">
-      {flights.map((flight) => (
+      {flights.map((flight) => {
+        const primaryAircraft = aircraftModelFromCode(
+          flight.segments && flight.segments.length > 0
+            ? flight.segments[0]?.aircraftCode
+            : undefined,
+        );
+
+        return (
         <div key={flight.id} className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
           <button
             type="button"
@@ -126,99 +206,105 @@ export function FlightResults({ flights, isLoading }: FlightResultsProps) {
           >
             <div className="p-4 sm:p-5">
               <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6">
-              {/* Left: Flight details */}
-              <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-                {/* Airline Logo */}
-                <div className="flex items-start sm:items-center shrink-0">
-                  <AirlineLogo airline={flight.airline} />
-                </div>
+                {/* Left: Flight details */}
+                <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+                  {/* Airline Logo */}
+                  <div className="flex items-start sm:items-center shrink-0">
+                    <AirlineLogo airline={flight.airline} />
+                  </div>
 
-                {/* Times & Airline Name */}
-                <div className="flex-1 flex flex-col gap-2 min-w-0">
-                  {/* Times */}
-                  <div className="flex items-baseline gap-2">
+                  {/* Times & Airline Name */}
+                  <div className="flex-1 flex flex-col gap-2 min-w-0">
+                    {/* Times */}
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-base font-semibold text-gray-900">
+                        {formatTime(flight.departureTime)} - {formatTime(flight.arrivalTime)}
+                      </span>
+                    </div>
+
+                    {/* Airline Name */}
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-sm font-medium text-gray-600">
+                        {flight.airline} {flight?.flightNumber}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Duration & Route */}
+                  <div className="flex-1 flex flex-col gap-2 sm:text-center">
+                    {/* Travel Time */}
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-base font-semibold text-gray-900">
+                        {flight.duration}
+                      </span>
+                    </div>
+
+                    {/* Departure and Arrival Locations */}
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-sm font-medium text-gray-600">
+                        {flight.origin} - {flight.destination}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Stops */}
+                  <div className="flex-1 flex flex-col gap-2 sm:text-center">
                     <span className="text-base font-semibold text-gray-900">
-                      {formatTime(flight.departureTime)} - {formatTime(flight.arrivalTime)}
+                      {flight.stops === 0 ? (
+                        <span>{t?.nonstop ?? "Nonstop"}</span>
+                      ) : (
+                        `${flight.stops} ${flight.stops === 1 ? (t?.stop ?? "stop") : (t?.stopsPlural ?? "stops")}`
+                      )}
                     </span>
-                  </div>
-
-                  {/* Airline Name */}
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-sm font-medium text-gray-600">
-                      {flight.airline} {flight?.flightNumber}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Duration & Route */}
-                <div className="flex-1 flex flex-col gap-2 sm:text-center">
-                  {/* Travel Time */}
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-base font-semibold text-gray-900">
-                      {flight.duration}
-                    </span>
-                  </div>
-
-                  {/* Departure and Arrival Locations */}
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-sm font-medium text-gray-600">
-                      {flight.origin} - {flight.destination}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Stops */}
-                <div className="flex-1 flex flex-col gap-2 sm:text-center">
-                  <span className="text-base font-semibold text-gray-900">
-                    {flight.stops === 0 ? (
-                      <span>Nonstop</span>
-                    ) : (
-                      `${flight.stops} Stop${flight.stops > 1 ? "s" : ""}`
+                    {flight.stopLocations && flight.stopLocations.length > 0 && (
+                      <span className="text-sm font-medium text-gray-600">
+                        {flight.stopLocations.join(", ")}
+                      </span>
                     )}
-                  </span>
-                  {flight.stopLocations && flight.stopLocations.length > 0 && (
-                    <span className="text-sm font-medium text-gray-600">
-                      {flight.stopLocations.join(", ")}
-                    </span>
-                  )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Right: Price */}
-              <div className="flex items-center justify-between sm:justify-end gap-4 lg:min-w-[140px] lg:pl-6 lg:border-l-2 lg:border-gray-100 pt-3 sm:pt-0 border-t lg:border-t-0 border-gray-200 lg:border-gray-100">
-                <div className="flex flex-col items-end">
-                  <div className="flex items-baseline gap-1">
+                {/* Right: Price */}
+                <div className="flex items-center justify-between sm:justify-end gap-4 lg:min-w-[140px] lg:pl-6 lg:border-l-2 lg:border-gray-100 pt-3 sm:pt-0 border-t lg:border-t-0 border-gray-200 lg:border-gray-100">
+                  <div className="flex flex-col items-end">
                     <span className="text-2xl sm:text-3xl font-bold text-green-600 leading-none">
                       {getCurrencySymbol(flight.currency)}
                       {Math.round(flight.price)}
                     </span>
                   </div>
-                  <span className="text-xs text-gray-500 mt-1">per person</span>
                 </div>
               </div>
             </div>
-          </div>
           </button>
 
           {/* Expandable details */}
           <div
             id={`flight-details-${flight.id}`}
-            className={`grid transition-[grid-template-rows] duration-200 ${
-              expandedId === flight.id ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-            }`}
+            className={`grid transition-[grid-template-rows] duration-200 ${expandedId === flight.id ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+              }`}
           >
             <div className="overflow-hidden">
               <div className="border-t border-gray-200 bg-white px-4 sm:px-5 py-4">
                 {flight.segments && flight.segments.length > 0 ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {/* Timeline */}
+                  <div className="grid grid-cols-1 gap-4">
+                    {/* Timeline / Trip details */}
                     <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-                      <p className="text-sm font-semibold text-gray-900 mb-3">
-                        Trip details
-                      </p>
+                      <div className="flex items-center justify-between mb-2 gap-2">
+                        <p className="text-sm font-semibold text-gray-900">
+                          {t?.tripDetails ?? "Trip details"}
+                        </p>
+                        {primaryAircraft && (
+                          <p className="text-xs font-medium text-gray-600 text-right">
+                            {primaryAircraft}
+                          </p>
+                        )}
+                      </div>
 
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         {flight.segments.map((seg, idx) => {
+                          const legDuration = formatDurationMinutes(
+                            diffMinutesLocal(seg.departAt, seg.arriveAt) ?? undefined,
+                          );
                           const layover = formatDurationMinutes(seg.layoverMinutesAfter);
                           return (
                             <div key={`${seg.from}-${seg.to}-${idx}`}>
@@ -232,23 +318,26 @@ export function FlightResults({ flights, isLoading }: FlightResultsProps) {
                                 </div>
 
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center justify-between gap-3">
+                                  <div className="flex items-center justify-between gap-3 mb-0.5">
                                     <p className="text-sm font-semibold text-gray-900">
-                                      {formatTime(seg.departAt)} · {seg.from}
+                                      {formatTime(seg.departAt)} · {seg.from} —{" "}
+                                      {formatTime(seg.arriveAt)} · {seg.to}
                                     </p>
-                                    <p className="text-xs text-gray-500">
+                                    <p className="text-xs text-gray-500 whitespace-nowrap">
                                       {seg.flightNumber ?? flight.flightNumber ?? ""}
                                     </p>
                                   </div>
-                                  <p className="text-xs text-gray-600 mt-0.5">
-                                    Arrive {formatTime(seg.arriveAt)} · {seg.to}
-                                  </p>
+                                  {legDuration && (
+                                    <p className="text-[11px] text-gray-500">
+                                      {t?.travelTime ?? "Travel time"} · {legDuration}
+                                    </p>
+                                  )}
                                 </div>
                               </div>
 
                               {layover ? (
                                 <div className="ml-5 mt-2 text-xs text-gray-600">
-                                  {layover} layover · {seg.to}
+                                  {layover} {t?.layover ?? "layover"} · {seg.to}
                                 </div>
                               ) : null}
                             </div>
@@ -256,60 +345,17 @@ export function FlightResults({ flights, isLoading }: FlightResultsProps) {
                         })}
                       </div>
                     </div>
-
-                    {/* Quick summary */}
-                    <div className="rounded-xl border border-gray-200 bg-white p-4">
-                      <p className="text-sm font-semibold text-gray-900 mb-3">
-                        Summary
-                      </p>
-                      <dl className="grid grid-cols-2 gap-3 text-sm">
-                        <div>
-                          <dt className="text-xs uppercase tracking-wide text-gray-500">
-                            Total duration
-                          </dt>
-                          <dd className="font-semibold text-gray-900">{flight.duration}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-xs uppercase tracking-wide text-gray-500">
-                            Stops
-                          </dt>
-                          <dd className="font-semibold text-gray-900">
-                            {flight.stops === 0 ? "Nonstop" : `${flight.stops}`}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-xs uppercase tracking-wide text-gray-500">
-                            Route
-                          </dt>
-                          <dd className="font-semibold text-gray-900">
-                            {flight.origin} → {flight.destination}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-xs uppercase tracking-wide text-gray-500">
-                            Price
-                          </dt>
-                          <dd className="font-semibold text-gray-900">
-                            {getCurrencySymbol(flight.currency)}
-                            {Math.round(flight.price)} / person
-                          </dd>
-                        </div>
-                      </dl>
-                      <p className="mt-3 text-xs text-gray-500">
-                        Click the row again to collapse.
-                      </p>
-                    </div>
                   </div>
                 ) : (
                   <p className="text-sm text-gray-600">
-                    No segment details available for this result.
+                    {t?.noSegmentDetails ?? "No segment details available for this result."}
                   </p>
                 )}
               </div>
             </div>
           </div>
         </div>
-      ))}
+      )})}
     </div>
   );
 }

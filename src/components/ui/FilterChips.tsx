@@ -4,6 +4,7 @@ import { type FilterState } from "./Filters";
 import { FilterDropdowns } from "./FilterDropdowns";
 import { type NormalizedFlight } from "@/lib/api/amadeus";
 import { useRef, useState } from "react";
+import type { I18nStrings } from "@/lib/i18n";
 
 type FilterChipsProps = {
   filters: FilterState;
@@ -13,6 +14,7 @@ type FilterChipsProps = {
   onClearFilter: (filterType: "stops" | "price" | "airlines") => void;
   onReset: () => void;
   activeFilterType: "stops" | "price" | "airlines" | null;
+  t?: Partial<I18nStrings>;
 };
 
 export function FilterChips({
@@ -23,6 +25,7 @@ export function FilterChips({
   onClearFilter,
   onReset,
   activeFilterType,
+  t,
 }: FilterChipsProps) {
   const stopsRef = useRef<HTMLDivElement>(null);
   const priceRef = useRef<HTMLDivElement>(null);
@@ -35,21 +38,23 @@ export function FilterChips({
 
   const stopsLabel =
     filters.stops === null
-      ? "Stops"
+      ? t?.stops ?? "Stops"
       : filters.stops === 0
-        ? "Nonstop"
+        ? t?.nonstop ?? "Nonstop"
         : filters.stops === 1
-          ? "1 stop"
-          : "2+ stops";
+          ? `1 ${t?.stop ?? "stop"}`
+          : `2+ ${t?.stopsPlural ?? "stops"}`;
 
   const priceLabel = (() => {
-    if (!filters.priceRange) return "Price";
+    if (!filters.priceRange) return t?.price ?? "Price";
     const [, max] = filters.priceRange;
     return `Up to $${Math.round(max)}`;
   })();
 
   const airlinesLabel =
-    filters.airlines.length > 0 ? `Airlines (${filters.airlines.length})` : "Airlines";
+    filters.airlines.length > 0
+      ? `${t?.airlines ?? "Airlines"} (${filters.airlines.length})`
+      : t?.airlines ?? "Airlines";
 
   const handleFilterClick = (filterType: "stops" | "price" | "airlines") => {
     // Toggle: if clicking the same filter, close it; otherwise open the new one
@@ -106,6 +111,7 @@ export function FilterChips({
               onFilterChange={onFilterChange}
               activeFilterType="stops"
               onClose={() => onFilterClick(null)}
+              t={t}
             />
           )}
         </div>
@@ -153,6 +159,7 @@ export function FilterChips({
               onFilterChange={onFilterChange}
               activeFilterType="price"
               onClose={() => onFilterClick(null)}
+              t={t}
             />
           )}
         </div>
@@ -200,6 +207,7 @@ export function FilterChips({
               onFilterChange={onFilterChange}
               activeFilterType="airlines"
               onClose={() => onFilterClick(null)}
+              t={t}
             />
           )}
         </div>
@@ -210,7 +218,7 @@ export function FilterChips({
             onClick={onReset}
             className="h-9 px-4 rounded-full text-sm font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 transition-colors"
           >
-            Clear all
+            {t?.clearAll ?? "Clear all"}
           </button>
         )}
       </div>

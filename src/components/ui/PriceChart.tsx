@@ -10,7 +10,7 @@ import {
   YAxis,
   ReferenceLine,
 } from "recharts";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export type HourlyPricePoint = {
   hour: string;
@@ -23,45 +23,31 @@ type PriceChartProps = {
   departureDate: string;
   data?: HourlyPricePoint[];
   currency?: string;
+  t?: {
+    priceTrendsTitle: string;
+    averagePricesFor: string;
+    onDate: string;
+    pricesLow: string;
+    pricesHigh: string;
+    pricesTypical: string;
+    goodTimeToBook: string;
+    highSaveUpTo: string;
+    cheaperHoursSuffix: string;
+    typicalAdvice: string;
+    minLabel: string;
+    avgLabel: string;
+    maxLabel: string;
+    noChartTitle: string;
+    noChartSubtitle: string;
+    tooltipHour: string;
+    tooltipPrice: string;
+  };
 };
 
 function getCurrencySymbol(currencyCode: string): string {
-  const currencyMap: Record<string, string> = {
-    EUR: "€",
-    USD: "$",
-    GBP: "£",
-    JPY: "¥",
-    CAD: "C$",
-    AUD: "A$",
-    CHF: "Fr",
-    CNY: "¥",
-    INR: "₹",
-    BRL: "R$",
-    MXN: "$",
-    KRW: "₩",
-    SGD: "S$",
-    HKD: "HK$",
-    NZD: "NZ$",
-    ZAR: "R",
-    SEK: "kr",
-    NOK: "kr",
-    DKK: "kr",
-    PLN: "zł",
-    CZK: "Kč",
-    HUF: "Ft",
-    RON: "lei",
-    TRY: "₺",
-    ILS: "₪",
-    AED: "د.إ",
-    SAR: "﷼",
-    THB: "฿",
-    MYR: "RM",
-    PHP: "₱",
-    IDR: "Rp",
-    VND: "₫",
-  };
-
-  return currencyMap[currencyCode.toUpperCase()] || currencyCode;
+  // Currency setting removed: always show USD symbol
+  void currencyCode;
+  return "$";
 }
 
 function clampNonZeroSeries(series: HourlyPricePoint[]): HourlyPricePoint[] {
@@ -75,7 +61,9 @@ export function PriceChart({
   departureDate,
   data,
   currency = "USD",
+  t,
 }: PriceChartProps) {
+  const [isMobile, setIsMobile] = useState(false);
   const currencySymbol = getCurrencySymbol(currency);
   const chartData = useMemo(() => clampNonZeroSeries(data ?? []), [data]);
 
@@ -144,26 +132,37 @@ export function PriceChart({
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }, [departureDate]);
 
+  useEffect(() => {
+    const update = () => {
+      // Tailwind 'sm' breakpoint is 640px
+      setIsMobile(window.innerWidth < 640);
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
   return (
-    <div className="w-full max-w-6xl mx-auto mb-6 bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6">
+    <div className="w-full max-w-6xl mx-auto mb-6 bg-white rounded-xl border-2 border-gray-200 shadow-lg p-4 sm:p-6">
       {/* Header */}
       <div className="mb-5">
         <h2 className="text-xl font-bold text-gray-900 mb-1">
-          Price trends by hour
+          {t?.priceTrendsTitle ?? "Price trends by hour"}
         </h2>
         <p className="text-sm text-gray-600">
-          Average prices for{" "}
+          {t?.averagePricesFor ?? "Average prices for"}{" "}
           <span className="font-semibold text-gray-900">
             {origin} → {destination}
           </span>{" "}
-          on <span className="font-semibold text-gray-900">{dateLabel}</span>
+          {t?.onDate ?? "on"}{" "}
+          <span className="font-semibold text-gray-900">{dateLabel}</span>
         </p>
       </div>
 
       {stats ? (
         <>
           {/* Best Time to Book Indicator */}
-          <div className={`mb-5 rounded-xl border-2 ${stats.statusBg} p-4`}>
+              <div className={`mb-5 rounded-xl border-2 ${stats.statusBg} p-4`}>
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 mt-0.5">
                 {stats.priceStatus === "low" ? (
@@ -182,52 +181,61 @@ export function PriceChart({
               </div>
               <div className="flex-1">
                 <p className={`text-sm font-semibold ${stats.statusColor} mb-1`}>
-                  {stats.statusMessage}
+                      {stats.priceStatus === "low"
+                        ? t?.pricesLow ?? stats.statusMessage
+                        : stats.priceStatus === "high"
+                          ? t?.pricesHigh ?? stats.statusMessage
+                          : t?.pricesTypical ?? stats.statusMessage}
                 </p>
                 {stats.priceStatus === "high" && stats.savingsPotential > 0 && (
                   <p className="text-xs text-gray-600">
-                    You could save up to {currencySymbol}{stats.savingsPotential} ({stats.savingsPercent}%) by booking flights during cheaper hours
+                        {t?.highSaveUpTo ?? "You could save up to"}{" "}
+                        {currencySymbol}
+                        {stats.savingsPotential} ({stats.savingsPercent}%){" "}
+                        {t?.cheaperHoursSuffix ?? "by booking flights during cheaper hours"}
                   </p>
                 )}
                 {stats.priceStatus === "low" && (
                   <p className="text-xs text-gray-600">
-                    Good time to book! Prices are below typical range for this route
+                        {t?.goodTimeToBook ??
+                          "Good time to book! Prices are below typical range for this route"}
                   </p>
                 )}
                 {stats.priceStatus === "typical" && (
                   <p className="text-xs text-gray-600">
-                    Prices are within typical range. Consider booking during off-peak hours for better deals
+                        {t?.typicalAdvice ??
+                          "Prices are within typical range. Consider booking during off-peak hours for better deals"}
                   </p>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Stats cards - enhanced */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          {/* Stats cards - enhanced (responsive) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
             <div className="rounded-xl border-2 border-gray-200 bg-gradient-to-br from-green-50 to-white p-4">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                Minimum
+                    {t?.minLabel ?? "Minimum"}
               </p>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-xl sm:text-2xl font-bold text-green-600">
                 {currencySymbol}
                 {stats.min}
               </p>
             </div>
             <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                Average
+                    {t?.avgLabel ?? "Average"}
               </p>
-              <p className="text-2xl font-bold text-blue-600">
+              <p className="text-xl sm:text-2xl font-bold text-blue-600">
                 {currencySymbol}
                 {stats.avg}
               </p>
             </div>
             <div className="rounded-xl border-2 border-gray-200 bg-gradient-to-br from-orange-50 to-white p-4">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                Maximum
+                    {t?.maxLabel ?? "Maximum"}
               </p>
-              <p className="text-2xl font-bold text-orange-600">
+              <p className="text-xl sm:text-2xl font-bold text-orange-600">
                 {currencySymbol}
                 {stats.max}
               </p>
@@ -235,17 +243,27 @@ export function PriceChart({
           </div>
 
           {/* Chart - enhanced */}
-          <div className="h-80 w-full" style={{ minHeight: 320 }}>
+          <div
+            className="w-full"
+            style={{ height: isMobile ? 260 : 320, minHeight: isMobile ? 260 : 320 }}
+          >
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={chartData}
-                margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
+                margin={{ top: 10, right: isMobile ? 8 : 20, left: 0, bottom: isMobile ? 36 : 10 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
                 <XAxis
                   dataKey="hour"
-                  tick={{ fontSize: 11, fill: "#6b7280", fontWeight: 500 }}
-                  interval={2}
+                  tick={{
+                    fontSize: isMobile ? 10 : 11,
+                    fill: "#6b7280",
+                    fontWeight: 500,
+                  }}
+                  interval={isMobile ? 5 : 2}
+                  angle={isMobile ? -45 : 0}
+                  textAnchor={isMobile ? "end" : "middle"}
+                  height={isMobile ? 44 : 30}
                   axisLine={{ stroke: "#d1d5db", strokeWidth: 1.5 }}
                   tickLine={false}
                 />
@@ -274,7 +292,7 @@ export function PriceChart({
                   ]}
                   labelFormatter={(label) => (
                     <span className="font-semibold text-gray-900">
-                      Hour: {String(label)}
+                          {t?.tooltipHour ?? "Hour"}: {String(label)}
                     </span>
                   )}
                 />
@@ -320,8 +338,12 @@ export function PriceChart({
                 d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
               />
             </svg>
-            <p className="text-base font-semibold text-gray-500">No chart data yet</p>
-            <p className="text-sm text-gray-400 mt-1">Run a search to see price trends</p>
+                <p className="text-base font-semibold text-gray-500">
+                  {t?.noChartTitle ?? "No chart data yet"}
+                </p>
+                <p className="text-sm text-gray-400 mt-1">
+                  {t?.noChartSubtitle ?? "Run a search to see price trends"}
+                </p>
           </div>
         </div>
       )}

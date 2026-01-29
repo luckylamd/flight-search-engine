@@ -6,13 +6,22 @@ export type SearchFormValues = {
   origin: string;
   destination: string;
   departureDate: string;
-  adults: number;
 };
 
 type SearchPanelProps = {
   defaultValues?: SearchFormValues;
   onSearch?: (values: SearchFormValues) => void;
   isLoading?: boolean;
+  t?: {
+    from: string;
+    to: string;
+    departure: string;
+    search: string;
+    searching: string;
+    cityOrAirport: string;
+    swapAria: string;
+    tip: string;
+  };
 };
 
 const getDefaultDepartureDate = () =>
@@ -23,10 +32,10 @@ export function SearchPanel({
     origin: "NYC",
     destination: "LON",
     departureDate: getDefaultDepartureDate(),
-    adults: 1,
   },
   onSearch,
   isLoading = false,
+  t,
 }: SearchPanelProps) {
   const [form, setForm] = useState<SearchFormValues>(defaultValues);
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -35,11 +44,6 @@ export function SearchPanel({
     const { name, value } = e.target;
 
     setForm((prev) => {
-      if (name === "adults") {
-        const num = Number(value);
-        return { ...prev, adults: Number.isFinite(num) && num > 0 ? num : 1 };
-      }
-
       if (name === "origin" || name === "destination") {
         return { ...prev, [name]: value.toUpperCase() };
       }
@@ -79,7 +83,7 @@ export function SearchPanel({
                 htmlFor="origin"
                 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1"
               >
-                From
+                {t?.from ?? "From"}
               </label>
               <input
                 id="origin"
@@ -88,7 +92,7 @@ export function SearchPanel({
                 onChange={handleChange}
                 onFocus={() => setFocusedField("origin")}
                 onBlur={() => setFocusedField(null)}
-                placeholder="City or airport"
+                    placeholder={t?.cityOrAirport ?? "City or airport"}
                 className="w-full text-lg lg:text-xl font-bold text-gray-900 bg-transparent border-0 p-0 placeholder:text-gray-400 focus:outline-none focus:ring-0 disabled:opacity-60"
                 disabled={isLoading}
                 required
@@ -101,7 +105,7 @@ export function SearchPanel({
             type="button"
             onClick={handleSwap}
             className="hidden lg:flex h-12 w-12 items-center justify-center rounded-full bg-white border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition-all duration-200 disabled:opacity-60 shrink-0 self-center shadow-sm hover:shadow-md"
-            aria-label="Swap origin and destination"
+            aria-label={t?.swapAria ?? "Swap origin and destination"}
             disabled={isLoading}
           >
             ⇄
@@ -120,7 +124,7 @@ export function SearchPanel({
                 htmlFor="destination"
                 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1"
               >
-                To
+                {t?.to ?? "To"}
               </label>
               <input
                 id="destination"
@@ -129,7 +133,7 @@ export function SearchPanel({
                 onChange={handleChange}
                 onFocus={() => setFocusedField("destination")}
                 onBlur={() => setFocusedField(null)}
-                placeholder="City or airport"
+                    placeholder={t?.cityOrAirport ?? "City or airport"}
                 className="w-full text-lg lg:text-xl font-bold text-gray-900 bg-transparent border-0 p-0 placeholder:text-gray-400 focus:outline-none focus:ring-0 disabled:opacity-60"
                 disabled={isLoading}
                 required
@@ -150,7 +154,7 @@ export function SearchPanel({
                 htmlFor="departureDate"
                 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1"
               >
-                Departure
+                {t?.departure ?? "Departure"}
               </label>
               <input
                 id="departureDate"
@@ -167,38 +171,6 @@ export function SearchPanel({
             </div>
           </div>
 
-          {/* Adults Field */}
-          <div className="flex-1 relative group">
-            <div
-              className={`h-16 lg:h-20 px-4 lg:px-5 rounded-xl border-2 flex flex-col justify-center transition-all duration-200 ${
-                focusedField === "adults"
-                  ? "bg-white border-blue-500 shadow-md"
-                  : "bg-white border-gray-300 hover:border-gray-400"
-              }`}
-            >
-              <label
-                htmlFor="adults"
-                className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1"
-              >
-                Passengers
-              </label>
-              <input
-                id="adults"
-                name="adults"
-                type="number"
-                min={1}
-                max={9}
-                value={form.adults}
-                onChange={handleChange}
-                onFocus={() => setFocusedField("adults")}
-                onBlur={() => setFocusedField(null)}
-                className="w-full text-lg lg:text-xl font-bold text-gray-900 bg-transparent border-0 p-0 focus:outline-none focus:ring-0 disabled:opacity-60"
-                disabled={isLoading}
-                required
-              />
-            </div>
-          </div>
-
           {/* Search Button */}
           <div className="flex-shrink-0">
             <button
@@ -209,10 +181,10 @@ export function SearchPanel({
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
-                  Searching...
+                  {t?.searching ?? "Searching..."}
                 </span>
               ) : (
-                "Search"
+                t?.search ?? "Search"
               )}
             </button>
           </div>
@@ -221,8 +193,7 @@ export function SearchPanel({
 
       {/* Tip text */}
       <p className="mt-3 text-xs text-gray-500 text-center">
-        💡 Tip: Use IATA codes like <span className="font-semibold text-gray-700">JFK</span> or{" "}
-        <span className="font-semibold text-gray-700">LHR</span> for best results
+        {t?.tip ?? "Tip: Use IATA codes like JFK or LHR for best results"}
       </p>
     </div>
   );

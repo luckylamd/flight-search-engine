@@ -3,6 +3,7 @@
 import { type NormalizedFlight } from "@/lib/api/amadeus";
 import { useMemo, useState, useEffect, useRef } from "react";
 import { type FilterState } from "./Filters";
+import type { I18nStrings } from "@/lib/i18n";
 
 type FilterDropdownsProps = {
   flights: NormalizedFlight[];
@@ -10,6 +11,7 @@ type FilterDropdownsProps = {
   onFilterChange: (filters: FilterState) => void;
   activeFilterType: "stops" | "price" | "airlines" | null;
   onClose: () => void;
+  t?: Partial<I18nStrings>;
 };
 
 export function FilterDropdowns({
@@ -18,6 +20,7 @@ export function FilterDropdowns({
   onFilterChange,
   activeFilterType,
   onClose,
+  t,
 }: FilterDropdownsProps) {
   const [localStops, setLocalStops] = useState<number | null>(filters.stops);
   const [localPriceRange, setLocalPriceRange] = useState<[number, number] | null>(
@@ -102,13 +105,15 @@ export function FilterDropdowns({
       {/* Stops Dropdown */}
       {activeFilterType === "stops" && (
         <div className="p-4">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Stops</h3>
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">
+            {t?.stops ?? "Stops"}
+          </h3>
           <div className="space-y-2">
             {[
-              { value: null, label: "All flights" },
-              { value: 0, label: "Nonstop" },
-              { value: 1, label: "1 stop" },
-              { value: 2, label: "2+ stops" },
+              { value: null, label: t?.allFlights ?? "All flights" },
+              { value: 0, label: t?.nonstop ?? "Nonstop" },
+              { value: 1, label: `1 ${t?.stop ?? "stop"}` },
+              { value: 2, label: `2+ ${t?.stopsPlural ?? "stops"}` },
             ].map((option) => (
               <label
                 key={option.value ?? "all"}
@@ -145,7 +150,9 @@ export function FilterDropdowns({
         <div className="w-80">
           {/* Header */}
           <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-gray-200">
-            <h3 className="text-base font-semibold text-gray-900">Price</h3>
+                <h3 className="text-base font-semibold text-gray-900">
+                  {t?.price ?? "Price"}
+                </h3>
             <button
               onClick={onClose}
               className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
@@ -157,7 +164,9 @@ export function FilterDropdowns({
 
           {/* Content */}
           <div className="p-4">
-            <p className="text-sm text-gray-500 mb-4">All prices</p>
+            <p className="text-sm text-gray-500 mb-4">
+              {t?.allPrices ?? "All prices"}
+            </p>
 
             {/* Slider */}
             {minPrice >= 0 && maxPrice > minPrice && (() => {
@@ -230,7 +239,7 @@ export function FilterDropdowns({
               }}
               className="w-full mt-4 py-2 text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
             >
-              Clear
+                  {t?.clear ?? "Clear"}
             </button>
           </div>
         </div>
@@ -240,7 +249,7 @@ export function FilterDropdowns({
       {activeFilterType === "airlines" && (
         <div className="p-4 max-w-sm">
           <h3 className="text-sm font-semibold text-gray-900 mb-3">
-            Airlines ({localAirlines.length} selected)
+            {(t?.airlines ?? "Airlines")} ({localAirlines.length} {t?.selected ?? "selected"})
           </h3>
           <div className="max-h-64 overflow-y-auto space-y-2 border border-gray-200 rounded-lg p-2">
             {availableAirlines.map((airline) => (
@@ -266,7 +275,7 @@ export function FilterDropdowns({
             onClick={applyFilters}
             className="w-full mt-3 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
           >
-            Apply
+            {t?.apply ?? "Apply"}
           </button>
         </div>
       )}
