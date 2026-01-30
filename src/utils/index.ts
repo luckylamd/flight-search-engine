@@ -120,3 +120,59 @@ export function clampNonZeroSeries(series: HourlyPricePoint[]): HourlyPricePoint
   const anyPositive = series.some((p) => p.price > 0);
   return anyPositive ? series : [];
 }
+
+export function formatDuration(duration: string): string {
+  // Duration format: "PT2H30M" -> "2h 30m"
+  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+  if (!match) return duration;
+  const hours = match[1] ? `${match[1]}h` : "";
+  const minutes = match[2] ? `${match[2]}m` : "";
+  return `${hours} ${minutes}`.trim() || duration;
+}
+
+export function diffMinutes(aIso: string, bIso: string): number | null {
+  const a = new Date(aIso).getTime();
+  const b = new Date(bIso).getTime();
+  if (Number.isNaN(a) || Number.isNaN(b)) return null;
+  const diff = Math.round((b - a) / 60000);
+  return Number.isFinite(diff) ? diff : null;
+}
+
+export function normalizeFareType(input?: string): "Basic economy" | "Standard" | "Unknown" {
+  if (!input) return "Unknown";
+  const s = input.toUpperCase();
+  if (s.includes("BASIC")) return "Basic economy";
+  if (s.includes("STANDARD") || s.includes("ECONOMY") || s.includes("FLEX")) return "Standard";
+  return "Unknown";
+}
+
+export function getDefaultDepartureDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+const SETTINGS_STORAGE_KEY = "flight_search_settings_v1";
+
+export function loadSettings(): AppSettings {
+  if (typeof window === "undefined") {
+    return { language: "en" };
+  }
+  try {
+    const raw = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (!raw) return { language: "en" };
+    const parsed = JSON.parse(raw) as Partial<AppSettings>;
+    const language: AppLanguage =
+      parsed.language === "de"
+        ? "de"
+        : parsed.language === "es"
+          ? "es"
+          : "en";
+    return { language };
+  } catch {
+    return { language: "en" };
+  }
+}
+
+export function saveSettings(settings: AppSettings): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+}

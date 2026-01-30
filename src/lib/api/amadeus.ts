@@ -1,5 +1,6 @@
 // @ts-expect-error - amadeus doesn't have TypeScript types
 import Amadeus from "amadeus";
+import { formatDuration, diffMinutes, normalizeFareType } from "@/utils";
 
 const AMADEUS_API_KEY = process.env.AMADEUS_API_KEY;
 const AMADEUS_SECRET_KEY = process.env.AMADEUS_SECRET_KEY;
@@ -18,31 +19,6 @@ const amadeus = new Amadeus({
 
 // Types are now in @/types
 
-function formatDuration(duration: string): string {
-  // Duration format: "PT2H30M" -> "2h 30m"
-  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
-  if (!match) return duration;
-  const hours = match[1] ? `${match[1]}h` : "";
-  const minutes = match[2] ? `${match[2]}m` : "";
-  return `${hours} ${minutes}`.trim() || duration;
-}
-
-function diffMinutes(aIso: string, bIso: string): number | null {
-  const a = new Date(aIso).getTime();
-  const b = new Date(bIso).getTime();
-  if (Number.isNaN(a) || Number.isNaN(b)) return null;
-  const diff = Math.round((b - a) / 60000);
-  return Number.isFinite(diff) ? diff : null;
-}
-
-function normalizeFareType(input?: string): "Basic economy" | "Standard" | "Unknown" {
-  if (!input) return "Unknown";
-  const s = input.toUpperCase();
-  if (s.includes("BASIC")) return "Basic economy";
-  if (s.includes("STANDARD") || s.includes("ECONOMY") || s.includes("FLEX")) return "Standard";
-  return "Unknown";
-}
-
 export async function searchFlights(opts: {
   origin: string;
   destination: string;
@@ -60,6 +36,8 @@ export async function searchFlights(opts: {
       adults: String(opts.adults),
       max: "50",
     });
+    console.log('testing response ', response);
+    
 
     const offers = (response.data as unknown as AmadeusFlightOffer[]) ?? [];
 

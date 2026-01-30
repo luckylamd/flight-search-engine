@@ -1,34 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-const STORAGE_KEY = "flight_search_settings_v1";
-
-export function loadSettings(): AppSettings {
-  if (typeof window === "undefined") {
-    return { language: "en" };
-  }
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { language: "en" };
-    const parsed = JSON.parse(raw) as Partial<AppSettings>;
-    const language: AppLanguage =
-      parsed.language === "de"
-        ? "de"
-        : parsed.language === "es"
-          ? "es"
-          : "en";
-    return { language };
-  } catch {
-    return { language: "en" };
-  }
-}
-
-export function saveSettings(settings: AppSettings) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-}
-
 // Types are in @/types
 
 export function SettingsPanel({ value, onChange, t }: SettingsPanelProps) {

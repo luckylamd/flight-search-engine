@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, type ChangeEvent, type FormEvent } from "react";
+import { getDefaultDepartureDate } from "@/utils";
 // Types are in @/types
-
-const getDefaultDepartureDate = () =>
-  new Date().toISOString().slice(0, 10);
 
 export function SearchPanel({
   defaultValues = {

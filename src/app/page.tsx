@@ -5,11 +5,8 @@ import { SearchPanel } from "@/components/ui/SearchPanel";
 import { PriceChart } from "@/components/ui/PriceChart";
 import { FlightResults } from "@/components/ui/FlightResults";
 import { FilterChips } from "@/components/ui/FilterChips";
-import {
-  loadSettings,
-  saveSettings,
-  SettingsPanel,
-} from "@/components/ui/SettingsPanel";
+import { SettingsPanel } from "@/components/ui/SettingsPanel";
+import { loadSettings, saveSettings } from "@/utils";
 import { STRINGS } from "@/lib/i18n";
 // Currency setting removed: always display USD ($)
 

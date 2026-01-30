@@ -9,7 +9,6 @@ import {
   aircraftModelFromCode,
   getCurrencySymbol,
 } from "@/utils";
-// Types are in @/types
 
 export function FlightResults({ flights, isLoading, t }: FlightResultsProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
