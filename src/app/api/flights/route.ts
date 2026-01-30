@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getFlightAvailability, searchFlights } from "@/lib/api/amadeus";
+import { searchFlights } from "@/lib/api/amadeus";
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
