@@ -34,13 +34,6 @@ type SearchPanelProps = {
   };
 };
 
-type FiltersProps = {
-  flights: NormalizedFlight[];
-  onFilterChange: (filters: FilterState) => void;
-  activeFilterType?: "stops" | "price" | "airlines" | null;
-  onClose?: () => void;
-};
-
 type FilterChipsProps = {
   filters: FilterState;
   flights: NormalizedFlight[];

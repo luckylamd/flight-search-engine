@@ -73,43 +73,6 @@ export function aircraftModelFromCode(code?: string): string | null {
   return map[key] ?? `Aircraft ${key}`;
 }
 
-export function cabinLabel(cabin?: string): string {
-  if (!cabin) return "Cabin: Unknown";
-  const c = cabin.toUpperCase();
-  if (c === "ECONOMY") return "Cabin: Economy";
-  if (c === "PREMIUM_ECONOMY") return "Cabin: Premium economy";
-  if (c === "BUSINESS") return "Cabin: Business";
-  if (c === "FIRST") return "Cabin: First";
-  return `Cabin: ${c}`;
-}
-
-export function wifiLabel(): string {
-  // Amadeus Flight Offers Search doesn't expose Wi‑Fi availability directly.
-  // We still show an explicit row so users know to check the airline.
-  return "Wi‑Fi details not provided (check airline)";
-}
-
-export function legroomLabel(
-  fareType?: "Basic economy" | "Standard" | "Unknown",
-): { primary: string; secondary?: string } {
-  if (fareType === "Basic economy") {
-    return {
-      primary: "Legroom: Tight (basic economy, estimated)",
-      secondary: "Basic economy often has more restrictive seat selection and may have less legroom.",
-    };
-  }
-  if (fareType === "Standard") {
-    return {
-      primary: "Legroom: Standard (typical economy, estimated)",
-      secondary: "Exact seat pitch varies by airline and aircraft.",
-    };
-  }
-  return {
-    primary: "Legroom: Unknown",
-    secondary: "Detailed legroom information is not available from this data source.",
-  };
-}
-
 export function getCurrencySymbol(currencyCode: string): string {
   // Currency setting removed: always show USD symbol
   void currencyCode;
