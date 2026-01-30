@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { searchFlights } from "@/lib/api/amadeus";
+import { getFlightAvailability, searchFlights } from "@/lib/api/amadeus";
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
             destination,
             departureDate,
             adults,
-        });
+        });        
 
         return NextResponse.json({ flights, hourlyPrices });
     } catch (error) {

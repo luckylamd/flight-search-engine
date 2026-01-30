@@ -229,9 +229,18 @@ export default function Home() {
       {/* Header */}
       <div className="w-full max-w-6xl mx-auto mb-8">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">
-            {t.title}
-          </h1>
+          <div className="flex items-center gap-4">
+            <div className="h-11 w-11 sm:h-14 sm:w-14 rounded-full bg-gradient-to-br from-slate-900 via-slate-800 to-blue-700 shadow-lg shadow-blue-900/40 flex items-center justify-center overflow-hidden">
+              <img
+                src="/airline.png"
+                alt={t.title}
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">
+              {t.title}
+            </h1>
+          </div>
           <SettingsPanel value={settings} onChange={setSettings} t={t} />
         </div>
       </div>
