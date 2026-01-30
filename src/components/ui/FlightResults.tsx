@@ -10,6 +10,15 @@ import {
   getCurrencySymbol,
 } from "@/utils";
 
+function formatDate(isoString: string): string {
+  const d = new Date(isoString);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
 export function FlightResults({ flights, isLoading, t }: FlightResultsProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -86,12 +95,19 @@ export function FlightResults({ flights, isLoading, t }: FlightResultsProps) {
                   </div>
 
                   {/* Times & Airline Name */}
-                  <div className="flex-1 flex flex-col gap-2 min-w-0">
+                  <div className="flex-1 flex flex-col gap-1 min-w-0">
                     {/* Times */}
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-base font-semibold text-gray-900">
-                        {formatTime(flight.departureTime)} - {formatTime(flight.arrivalTime)}
-                      </span>
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-base font-semibold text-gray-900">
+                          {formatTime(flight.departureTime)} - {formatTime(flight.arrivalTime)}
+                        </span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-xs font-medium text-gray-500">
+                          {formatDate(flight.departureTime)} - {formatDate(flight.arrivalTime)}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Airline Name */}
@@ -192,7 +208,8 @@ export function FlightResults({ flights, isLoading, t }: FlightResultsProps) {
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center justify-between gap-3 mb-0.5">
                                     <p className="text-sm font-semibold text-gray-900">
-                                      {formatTime(seg.departAt)} · {seg.from} —{" "}
+                                      {formatDate(seg.departAt)} {formatTime(seg.departAt)} ·{" "}
+                                      {seg.from} — {formatDate(seg.arriveAt)}{" "}
                                       {formatTime(seg.arriveAt)} · {seg.to}
                                     </p>
                                     <p className="text-xs text-gray-500 whitespace-nowrap">
