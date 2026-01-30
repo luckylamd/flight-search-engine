@@ -2,7 +2,6 @@
 
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { getDefaultDepartureDate } from "@/utils";
-// Types are in @/types
 
 export function SearchPanel({
   defaultValues = {
@@ -44,10 +43,8 @@ export function SearchPanel({
 
   return (
     <div className="w-full max-w-6xl mx-auto mb-6">
-      {/* Premium search container */}
       <form onSubmit={handleSubmit} className="w-full">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
-          {/* Origin Field */}
           <div className="flex-1 relative group">
             <div
               className={`h-16 lg:h-20 px-4 lg:px-5 rounded-xl border-2 flex flex-col justify-center transition-all duration-200 ${
@@ -77,7 +74,6 @@ export function SearchPanel({
             </div>
           </div>
 
-          {/* Swap Button */}
           <button
             type="button"
             onClick={handleSwap}
@@ -88,7 +84,6 @@ export function SearchPanel({
             ⇄
           </button>
 
-          {/* Destination Field */}
           <div className="flex-1 relative group">
             <div
               className={`h-16 lg:h-20 px-4 lg:px-5 rounded-xl border-2 flex flex-col justify-center transition-all duration-200 ${
@@ -118,7 +113,6 @@ export function SearchPanel({
             </div>
           </div>
 
-          {/* Date Field */}
           <div className="flex-1 relative group">
             <div
               className={`h-16 lg:h-20 px-4 lg:px-5 rounded-xl border-2 flex flex-col justify-center transition-all duration-200 ${
@@ -148,7 +142,6 @@ export function SearchPanel({
             </div>
           </div>
 
-          {/* Search Button */}
           <div className="flex-shrink-0">
             <button
               type="submit"
@@ -168,7 +161,6 @@ export function SearchPanel({
         </div>
       </form>
 
-      {/* Tip text */}
       <p className="mt-3 text-xs text-gray-500 text-center">
         {t?.tip ?? "Tip: Use IATA codes like JFK or LHR for best results"}
       </p>

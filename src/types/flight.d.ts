@@ -5,7 +5,7 @@ type NormalizedSegment = {
   arriveAt: string;
   flightNumber?: string;
   aircraftCode?: string;
-  layoverMinutesAfter?: number; // minutes between this segment arrival and next segment departure
+  layoverMinutesAfter?: number;
 };
 
 type NormalizedFlight = {
@@ -15,7 +15,7 @@ type NormalizedFlight = {
   airline: string;
   flightNumber?: string;
   stops: number;
-  stopLocations?: string[]; // Airport codes for layover stops
+  stopLocations?: string[];
   segments?: NormalizedSegment[];
   cabin?: string;
   fareType?: "Basic economy" | "Standard" | "Unknown";

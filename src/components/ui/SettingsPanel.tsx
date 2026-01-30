@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-// Types are in @/types
 
 export function SettingsPanel({ value, onChange, t }: SettingsPanelProps) {
   const [open, setOpen] = useState(false);
 
-  // Close on Escape
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {

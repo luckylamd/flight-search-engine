@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useEffect, useRef } from "react";
-// Types are in @/types
 
 export function FilterDropdowns({
   flights,
@@ -18,7 +17,6 @@ export function FilterDropdowns({
   const [localAirlines, setLocalAirlines] = useState<string[]>(filters.airlines);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Calculate min/max price from flights
   const { minPrice, maxPrice } = useMemo(() => {
     if (flights.length === 0) return { minPrice: 0, maxPrice: 1000 };
     const prices = flights.map((f) => f.price);
@@ -28,13 +26,11 @@ export function FilterDropdowns({
     };
   }, [flights]);
 
-  // Get unique airlines
   const availableAirlines = useMemo(() => {
     const airlines = new Set(flights.map((f) => f.airline));
     return Array.from(airlines).sort();
   }, [flights]);
 
-  // Initialize price range
   useEffect(() => {
     if (flights.length > 0 && minPrice > 0 && maxPrice > 0) {
       if (!localPriceRange) {
@@ -43,14 +39,12 @@ export function FilterDropdowns({
     }
   }, [flights.length, minPrice, maxPrice]);
 
-  // Sync local state with props
   useEffect(() => {
     setLocalStops(filters.stops);
     setLocalPriceRange(filters.priceRange);
     setLocalAirlines(filters.airlines);
   }, [filters]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -91,7 +85,6 @@ export function FilterDropdowns({
       ref={dropdownRef}
       className="absolute top-full left-0 mt-2 bg-white rounded-xl border-2 border-gray-300 shadow-xl z-50 min-w-[280px]"
     >
-      {/* Stops Dropdown */}
       {activeFilterType === "stops" && (
         <div className="p-4">
           <h3 className="text-sm font-semibold text-gray-900 mb-3">
@@ -134,10 +127,8 @@ export function FilterDropdowns({
         </div>
       )}
 
-      {/* Price Range Dropdown */}
       {activeFilterType === "price" && (
         <div className="w-80">
-          {/* Header */}
           <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-gray-200">
                 <h3 className="text-base font-semibold text-gray-900">
                   {t?.price ?? "Price"}
@@ -151,13 +142,11 @@ export function FilterDropdowns({
             </button>
           </div>
 
-          {/* Content */}
           <div className="p-4">
             <p className="text-sm text-gray-500 mb-4">
               {t?.allPrices ?? "All prices"}
             </p>
 
-            {/* Slider */}
             {minPrice >= 0 && maxPrice > minPrice && (() => {
               const currentMax = localPriceRange ? localPriceRange[1] : maxPrice;
               const sliderValue = localPriceRange ? localPriceRange[1] : maxPrice;
@@ -165,9 +154,7 @@ export function FilterDropdowns({
               return (
                 <div className="space-y-4">
                   <div className="relative py-2">
-                    {/* Slider track background */}
                     <div className="h-2 bg-gray-200 rounded-full relative">
-                      {/* Filled portion (blue line) */}
                       <div
                         className="absolute h-2 bg-blue-600 rounded-full transition-all duration-150"
                         style={{
@@ -175,7 +162,6 @@ export function FilterDropdowns({
                         }}
                       />
                     </div>
-                    {/* Range input overlay */}
                     <input
                       type="range"
                       min={minPrice}
@@ -186,7 +172,6 @@ export function FilterDropdowns({
                         const val = Number(e.target.value);
                         const newRange: [number, number] = [minPrice, val];
                         setLocalPriceRange(newRange);
-                        // Apply immediately
                         onFilterChange({
                           stops: localStops,
                           priceRange: newRange,
@@ -198,7 +183,6 @@ export function FilterDropdowns({
                         top: "4px",
                       }}
                     />
-                    {/* Visual handle */}
                     <div
                       className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-md pointer-events-none transition-all duration-150"
                       style={{
@@ -207,7 +191,6 @@ export function FilterDropdowns({
                     />
                   </div>
 
-                  {/* Price display */}
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">${minPrice}</span>
                     <span className="font-semibold text-gray-900">${currentMax}</span>
@@ -216,7 +199,6 @@ export function FilterDropdowns({
               );
             })()}
 
-            {/* Clear button */}
             <button
               onClick={() => {
                 setLocalPriceRange(null);
@@ -234,7 +216,6 @@ export function FilterDropdowns({
         </div>
       )}
 
-      {/* Airlines Dropdown */}
       {activeFilterType === "airlines" && (
         <div className="p-4 max-w-sm">
           <h3 className="text-sm font-semibold text-gray-900 mb-3">

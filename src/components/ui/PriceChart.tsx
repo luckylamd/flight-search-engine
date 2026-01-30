@@ -12,7 +12,6 @@ import {
 } from "recharts";
 import { useEffect, useMemo, useState } from "react";
 import { getCurrencySymbol, clampNonZeroSeries } from "@/utils";
-// Types are in @/types
 
 export function PriceChart({
   origin,
@@ -33,40 +32,34 @@ export function PriceChart({
     const max = Math.max(...prices);
     const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
     
-    // Calculate price range indicators for booking advice
     const sortedPrices = [...prices].sort((a, b) => a - b);
     const q25Index = Math.floor(sortedPrices.length * 0.25);
     const q75Index = Math.floor(sortedPrices.length * 0.75);
     const q25 = sortedPrices[q25Index] || min;
     const q75 = sortedPrices[q75Index] || max;
     
-    // Determine price status
     let priceStatus: "low" | "typical" | "high";
     let statusMessage: string;
     let statusColor: string;
     let statusBg: string;
     
     if (avg <= q25 * 1.1) {
-      // Average is close to or below 25th percentile - prices are low
       priceStatus = "low";
       statusMessage = "Prices are currently low";
       statusColor = "text-green-700";
       statusBg = "bg-green-50 border-green-200";
     } else if (avg >= q75 * 0.9) {
-      // Average is close to or above 75th percentile - prices are high
       priceStatus = "high";
       statusMessage = "Prices are currently high";
       statusColor = "text-red-700";
       statusBg = "bg-red-50 border-red-200";
     } else {
-      // Average is in the middle range - prices are typical
       priceStatus = "typical";
       statusMessage = "Prices are typical";
       statusColor = "text-blue-700";
       statusBg = "bg-blue-50 border-blue-200";
     }
     
-    // Calculate savings potential
     const savingsPotential = Math.round(avg - min);
     const savingsPercent = Math.round(((avg - min) / avg) * 100);
     
@@ -93,7 +86,6 @@ export function PriceChart({
 
   useEffect(() => {
     const update = () => {
-      // Tailwind 'sm' breakpoint is 640px
       setIsMobile(window.innerWidth < 640);
     };
     update();
@@ -103,7 +95,6 @@ export function PriceChart({
 
   return (
     <div className="w-full max-w-6xl mx-auto mb-6 bg-white rounded-xl border-2 border-gray-200 shadow-lg p-4 sm:p-6">
-      {/* Header */}
       <div className="mb-5">
         <h2 className="text-xl font-bold text-gray-900 mb-1">
           {t?.priceTrendsTitle ?? "Price trends by hour"}
@@ -120,7 +111,6 @@ export function PriceChart({
 
       {stats ? (
         <>
-          {/* Best Time to Book Indicator */}
               <div className={`mb-5 rounded-xl border-2 ${stats.statusBg} p-4`}>
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 mt-0.5">
@@ -170,7 +160,6 @@ export function PriceChart({
             </div>
           </div>
 
-          {/* Stats cards - enhanced (responsive) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
             <div className="rounded-xl border-2 border-gray-200 bg-gradient-to-br from-green-50 to-white p-4">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
@@ -201,7 +190,6 @@ export function PriceChart({
             </div>
           </div>
 
-          {/* Chart - enhanced */}
           <div
             className="w-full"
             style={{ height: isMobile ? 260 : 320, minHeight: isMobile ? 260 : 320 }}

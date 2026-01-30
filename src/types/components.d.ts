@@ -1,7 +1,3 @@
-/**
- * Component prop types and interfaces
- */
-
 type SearchFormValues = {
   origin: string;
   destination: string;
@@ -9,7 +5,7 @@ type SearchFormValues = {
 };
 
 type FilterState = {
-  stops: number | null; // null = all, 0 = nonstop, 1 = 1 stop, 2 = 2+ stops
+  stops: number | null;
   priceRange: [number, number] | null;
   airlines: string[];
 };

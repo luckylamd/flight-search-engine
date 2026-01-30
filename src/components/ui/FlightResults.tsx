@@ -87,16 +87,12 @@ export function FlightResults({ flights, isLoading, t }: FlightResultsProps) {
           >
             <div className="p-4 sm:p-5">
               <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6">
-                {/* Left: Flight details */}
                 <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-                  {/* Airline Logo */}
                   <div className="flex items-start sm:items-center shrink-0">
                     <AirlineLogo airline={flight.airline} />
                   </div>
 
-                  {/* Times & Airline Name */}
                   <div className="flex-1 flex flex-col gap-1 min-w-0">
-                    {/* Times */}
                     <div className="flex flex-col gap-0.5">
                       <div className="flex items-baseline gap-2">
                         <span className="text-base font-semibold text-gray-900">
@@ -110,7 +106,6 @@ export function FlightResults({ flights, isLoading, t }: FlightResultsProps) {
                       </div>
                     </div>
 
-                    {/* Airline Name */}
                     <div className="flex items-baseline gap-2">
                       <span className="text-sm font-medium text-gray-600">
                         {flight.airline} {flight?.flightNumber}
@@ -118,16 +113,13 @@ export function FlightResults({ flights, isLoading, t }: FlightResultsProps) {
                     </div>
                   </div>
 
-                  {/* Duration & Route */}
                   <div className="flex-1 flex flex-col gap-2 sm:text-center">
-                    {/* Travel Time */}
                     <div className="flex items-baseline gap-2">
                       <span className="text-base font-semibold text-gray-900">
                         {flight.duration}
                       </span>
                     </div>
 
-                    {/* Departure and Arrival Locations */}
                     <div className="flex items-baseline gap-2">
                       <span className="text-sm font-medium text-gray-600">
                         {flight.origin} - {flight.destination}
@@ -135,7 +127,6 @@ export function FlightResults({ flights, isLoading, t }: FlightResultsProps) {
                     </div>
                   </div>
 
-                  {/* Stops */}
                   <div className="flex-1 flex flex-col gap-2 sm:text-center">
                     <span className="text-base font-semibold text-gray-900">
                       {flight.stops === 0 ? (
@@ -152,7 +143,6 @@ export function FlightResults({ flights, isLoading, t }: FlightResultsProps) {
                   </div>
                 </div>
 
-                {/* Right: Price */}
                 <div className="flex items-center justify-between sm:justify-end gap-4 lg:min-w-[140px] lg:pl-6 lg:border-l-2 lg:border-gray-100 pt-3 sm:pt-0 border-t lg:border-t-0 border-gray-200 lg:border-gray-100">
                   <div className="flex flex-col items-end">
                     <span className="text-2xl sm:text-3xl font-bold text-green-600 leading-none">
@@ -165,7 +155,6 @@ export function FlightResults({ flights, isLoading, t }: FlightResultsProps) {
             </div>
           </button>
 
-          {/* Expandable details */}
           <div
             id={`flight-details-${flight.id}`}
             className={`grid transition-[grid-template-rows] duration-200 ${expandedId === flight.id ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
@@ -175,7 +164,6 @@ export function FlightResults({ flights, isLoading, t }: FlightResultsProps) {
               <div className="border-t border-gray-200 bg-white px-4 sm:px-5 py-4">
                 {flight.segments && flight.segments.length > 0 ? (
                   <div className="grid grid-cols-1 gap-4">
-                    {/* Timeline / Trip details */}
                     <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
                       <div className="flex items-center justify-between mb-2 gap-2">
                         <p className="text-sm font-semibold text-gray-900">
@@ -197,7 +185,6 @@ export function FlightResults({ flights, isLoading, t }: FlightResultsProps) {
                           return (
                             <div key={`${seg.from}-${seg.to}-${idx}`}>
                               <div className="flex gap-3">
-                                {/* Timeline dots/line */}
                                 <div className="flex flex-col items-center">
                                   <div className="h-2 w-2 rounded-full bg-blue-600 mt-1.5" />
                                   {idx < flight.segments!.length - 1 ? (

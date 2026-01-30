@@ -1,17 +1,11 @@
-/**
- * Internationalization (i18n) types and interfaces
- */
-
 type AppLanguage = "en" | "de" | "es";
 
 type I18nStrings = {
-  // Header / general
   title: string;
   settings: string;
   done: string;
   language: string;
 
-  // Search panel
   from: string;
   to: string;
   departure: string;
@@ -21,7 +15,6 @@ type I18nStrings = {
   swapAria: string;
   tip: string;
 
-  // Filters / results header
   stops: string;
   nonstop: string;
   stop: string;
@@ -39,22 +32,20 @@ type I18nStrings = {
   flights: string;
   viewMore: string;
 
-  // Sort
   sortBest: string;
   sortCheapest: string;
   sortFastest: string;
   sortFewestStops: string;
 
-  // Chart
   priceTrendsTitle: string;
-  averagePricesFor: string; // "Average prices for"
-  onDate: string; // "on"
+  averagePricesFor: string;
+  onDate: string;
   pricesLow: string;
   pricesHigh: string;
   pricesTypical: string;
   goodTimeToBook: string;
-  highSaveUpTo: string; // "You could save up to"
-  cheaperHoursSuffix: string; // "by booking flights during cheaper hours"
+  highSaveUpTo: string;
+  cheaperHoursSuffix: string;
   typicalAdvice: string;
   minLabel: string;
   avgLabel: string;
@@ -64,7 +55,6 @@ type I18nStrings = {
   tooltipHour: string;
   tooltipPrice: string;
 
-  // Results / details
   noFlightsTitle: string;
   noFlightsSubtitle: string;
   noSegmentDetails: string;

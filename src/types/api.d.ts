@@ -1,7 +1,3 @@
-/**
- * API-related types and interfaces
- */
-
 type AmadeusFlightOffer = {
   id: string;
   price: {
@@ -13,9 +9,9 @@ type AmadeusFlightOffer = {
   numberOfBookableSeats?: number;
   travelerPricings?: Array<{
     fareDetailsBySegment?: Array<{
-      cabin?: string; // e.g. ECONOMY, BUSINESS
-      brandedFare?: string; // e.g. BASIC_ECONOMY, ECONOMY, STANDARD
-      class?: string; // booking class
+      cabin?: string;
+      brandedFare?: string;
+      class?: string;
     }>;
   }>;
   itineraries: Array<{

@@ -28,7 +28,6 @@ export function diffMinutesLocal(aIso: string, bIso: string): number | null {
 export function aircraftModelFromCode(code?: string): string | null {
   if (!code) return null;
   const map: Record<string, string> = {
-    // Airbus (common)
     "319": "Airbus A319",
     "320": "Airbus A320",
     "321": "Airbus A321",
@@ -42,7 +41,6 @@ export function aircraftModelFromCode(code?: string): string | null {
     "35K": "Airbus A350-1000",
     "388": "Airbus A380",
 
-    // Boeing (common)
     "737": "Boeing 737",
     "738": "Boeing 737-800",
     "73H": "Boeing 737-800",
@@ -61,7 +59,6 @@ export function aircraftModelFromCode(code?: string): string | null {
     "789": "Boeing 787-9",
     "78X": "Boeing 787-10",
 
-    // Embraer / regional
     "E70": "Embraer E170",
     "E75": "Embraer E175",
     "E90": "Embraer E190",
@@ -74,7 +71,6 @@ export function aircraftModelFromCode(code?: string): string | null {
 }
 
 export function getCurrencySymbol(currencyCode: string): string {
-  // Currency setting removed: always show USD symbol
   void currencyCode;
   return "$";
 }
@@ -85,7 +81,6 @@ export function clampNonZeroSeries(series: HourlyPricePoint[]): HourlyPricePoint
 }
 
 export function formatDuration(duration: string): string {
-  // Duration format: "PT2H30M" -> "2h 30m"
   const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
   if (!match) return duration;
   const hours = match[1] ? `${match[1]}h` : "";

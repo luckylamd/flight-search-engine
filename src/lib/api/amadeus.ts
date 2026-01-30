@@ -50,12 +50,8 @@ export async function searchFlights(opts: {
         const airline =
           offer.validatingAirlineCodes?.[0] ?? firstSegment.number?.substring(0, 2) ?? "Unknown";
 
-        // Extract stop locations (layover airports)
-        // For flights with stops, the intermediate segments represent layovers
-        // The arrival airport of each segment (except the last) is a stop location
         const stopLocations: string[] = [];
         if (stops > 0 && itinerary.segments.length > 1) {
-          // Get arrival airports of all segments except the last one
           for (let i = 0; i < itinerary.segments.length - 1; i++) {
             const segment = itinerary.segments[i];
             if (segment?.arrival?.iataCode) {

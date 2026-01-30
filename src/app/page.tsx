@@ -8,7 +8,6 @@ import { FilterChips } from "@/components/ui/FilterChips";
 import { SettingsPanel } from "@/components/ui/SettingsPanel";
 import { loadSettings, saveSettings } from "@/utils";
 import { STRINGS } from "@/lib/i18n";
-// Currency setting removed: always display USD ($)
 
 export default function Home() {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
@@ -38,11 +37,9 @@ export default function Home() {
   >("bestValue");
   const [showAllResults, setShowAllResults] = useState(false);
 
-  // Apply filters to flights
   const filteredFlights = useMemo(() => {
     let result = [...allFlights];
 
-    // Filter by stops
     if (filters.stops !== null) {
       if (filters.stops === 2) {
         result = result.filter((f) => f.stops >= 2);
@@ -51,19 +48,15 @@ export default function Home() {
       }
     }
 
-    // Filter by price range
     if (filters.priceRange) {
       const [min, max] = filters.priceRange;
       result = result.filter((f) => f.price >= min && f.price <= max);
     }
 
-    // Filter by airlines
     if (filters.airlines.length > 0) {
       result = result.filter((f) => filters.airlines.includes(f.airline));
     }
 
-    // Sort
-    // Helper function to parse duration to minutes
     const toMinutes = (s: string) => {
       const h = s.match(/(\d+)h/);
       const m = s.match(/(\d+)m/);
@@ -77,9 +70,6 @@ export default function Home() {
     } else if (sortBy === "fewestStops") {
       result.sort((a, b) => a.stops - b.stops);
     } else if (sortBy === "bestValue") {
-      // Best value: combines price, duration, and stops into a score
-      // Lower score = better value
-      // Normalize values (0-1 scale) for comparison based on all flights
       const prices = allFlights.map((f) => f.price);
       const durations = allFlights.map((f) => toMinutes(f.duration));
       const maxPrice = Math.max(...prices);
@@ -102,7 +92,6 @@ export default function Home() {
         return maxStops > 0 ? stops / maxStops : 0;
       };
       
-      // Calculate value score: 60% weight on price, 30% on duration, 10% on stops
       const getValueScore = (flight: (typeof result)[0]) => {
         const priceScore = normalizePrice(flight.price) * 0.6;
         const durationScore = normalizeDuration(toMinutes(flight.duration)) * 0.3;
@@ -117,7 +106,6 @@ export default function Home() {
   }, [allFlights, filters, sortBy]);
 
   useEffect(() => {
-    // Reset "View more" when the result set changes meaningfully
     setShowAllResults(false);
   }, [allFlights, filters, sortBy]);
 
@@ -130,7 +118,6 @@ export default function Home() {
     return filteredFlights.slice(0, 15);
   }, [filteredFlights, showAllResults]);
 
-  // Compute hourly prices from filtered flights
   const filteredHourlyPrices = useMemo(() => {
     if (filteredFlights.length === 0) {
       return allHourlyPrices ?? [];
@@ -185,7 +172,6 @@ export default function Home() {
       .then((data) => {
         setAllFlights(data.flights);
         setAllHourlyPrices(data.hourlyPrices);
-        // Reset filters when new search is performed
         setFilters({
           stops: null,
           priceRange: null,
@@ -220,13 +206,11 @@ export default function Home() {
       if (filterType === "price") return { ...prev, priceRange: null };
       return { ...prev, airlines: [] };
     });
-    // If the cleared filter's dropdown is open, close it
     setActiveFilterType((prev) => (prev === filterType ? null : prev));
   };
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 py-8 px-4">
-      {/* Header */}
       <div className="w-full max-w-6xl mx-auto mb-8">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -245,7 +229,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Search Panel */}
       <SearchPanel
         defaultValues={search}
         onSearch={handleSearch}
@@ -253,7 +236,6 @@ export default function Home() {
         t={t}
       />
 
-      {/* Error message */}
       {error ? (
         <div className="w-full max-w-6xl mx-auto mb-5 rounded-xl border-2 border-red-300 bg-red-50 px-5 py-4 text-sm text-red-800 shadow-sm">
           <div className="flex items-center gap-2">
@@ -263,7 +245,6 @@ export default function Home() {
         </div>
       ) : null}
 
-      {/* Filter Chips Row */}
       {allFlights.length > 0 && (
         <>
           <FilterChips
@@ -277,7 +258,6 @@ export default function Home() {
             t={t}
           />
 
-          {/* Results header with sort */}
           <div className="w-full max-w-6xl mx-auto mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <p className="text-sm text-gray-600">
               {t.showing}{" "}
@@ -312,7 +292,6 @@ export default function Home() {
         </>
       )}
 
-      {/* Price Chart */}
       <PriceChart
         origin={search.origin}
         destination={search.destination}
@@ -322,7 +301,6 @@ export default function Home() {
         t={t}
       />
 
-      {/* Flight Results */}
       {allFlights.length > 0 && (
         <div className="w-full max-w-6xl mx-auto">
               <FlightResults
@@ -345,7 +323,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Loading state */}
       {isLoading && allFlights.length === 0 ? (
         <div className="w-full max-w-6xl mx-auto mt-8 text-center">
           <div className="inline-flex items-center gap-3 px-6 py-4 bg-white rounded-xl border-2 border-gray-200 shadow-sm">

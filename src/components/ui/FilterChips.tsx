@@ -1,8 +1,7 @@
 "use client";
 
 import { FilterDropdowns } from "./FilterDropdowns";
-import { useRef, useState } from "react";
-// Types are in @/types
+import { useRef } from "react";
 
 export function FilterChips({
   filters,
@@ -44,7 +43,6 @@ export function FilterChips({
       : t?.airlines ?? "Airlines";
 
   const handleFilterClick = (filterType: "stops" | "price" | "airlines") => {
-    // Toggle: if clicking the same filter, close it; otherwise open the new one
     if (activeFilterType === filterType) {
       onFilterClick(null);
     } else {

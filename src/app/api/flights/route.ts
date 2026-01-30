@@ -28,7 +28,6 @@ export async function GET(request: Request) {
 
         return NextResponse.json({ flights, hourlyPrices });
     } catch (error) {
-        // eslint-disable-next-line no-console
         console.error("[/api/flights] Error", error);
         return NextResponse.json(
             { error: "Failed to fetch flights from Amadeus" },
