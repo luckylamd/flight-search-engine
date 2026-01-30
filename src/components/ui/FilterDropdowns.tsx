@@ -1,18 +1,7 @@
 "use client";
 
-import { type NormalizedFlight } from "@/lib/api/amadeus";
 import { useMemo, useState, useEffect, useRef } from "react";
-import { type FilterState } from "./Filters";
-import type { I18nStrings } from "@/lib/i18n";
-
-type FilterDropdownsProps = {
-  flights: NormalizedFlight[];
-  filters: FilterState;
-  onFilterChange: (filters: FilterState) => void;
-  activeFilterType: "stops" | "price" | "airlines" | null;
-  onClose: () => void;
-  t?: Partial<I18nStrings>;
-};
+// Types are in @/types
 
 export function FilterDropdowns({
   flights,

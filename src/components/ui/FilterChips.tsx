@@ -1,21 +1,8 @@
 "use client";
 
-import { type FilterState } from "./Filters";
 import { FilterDropdowns } from "./FilterDropdowns";
-import { type NormalizedFlight } from "@/lib/api/amadeus";
 import { useRef, useState } from "react";
-import type { I18nStrings } from "@/lib/i18n";
-
-type FilterChipsProps = {
-  filters: FilterState;
-  flights: NormalizedFlight[];
-  onFilterClick: (filterType: "stops" | "price" | "airlines" | null) => void;
-  onFilterChange: (filters: FilterState) => void;
-  onClearFilter: (filterType: "stops" | "price" | "airlines") => void;
-  onReset: () => void;
-  activeFilterType: "stops" | "price" | "airlines" | null;
-  t?: Partial<I18nStrings>;
-};
+// Types are in @/types
 
 export function FilterChips({
   filters,

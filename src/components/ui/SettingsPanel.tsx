@@ -1,11 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { type AppLanguage } from "@/lib/i18n";
-
-export type AppSettings = {
-  language: AppLanguage;
-};
 
 const STORAGE_KEY = "flight_search_settings_v1";
 
@@ -34,11 +29,7 @@ export function saveSettings(settings: AppSettings) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 }
 
-type SettingsPanelProps = {
-  value: AppSettings;
-  onChange: (next: AppSettings) => void;
-  t?: { settings: string; done: string; language: string };
-};
+// Types are in @/types
 
 export function SettingsPanel({ value, onChange, t }: SettingsPanelProps) {
   const [open, setOpen] = useState(false);

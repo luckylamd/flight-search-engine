@@ -11,49 +11,8 @@ import {
   ReferenceLine,
 } from "recharts";
 import { useEffect, useMemo, useState } from "react";
-
-export type HourlyPricePoint = {
-  hour: string;
-  price: number;
-};
-
-type PriceChartProps = {
-  origin: string;
-  destination: string;
-  departureDate: string;
-  data?: HourlyPricePoint[];
-  currency?: string;
-  t?: {
-    priceTrendsTitle: string;
-    averagePricesFor: string;
-    onDate: string;
-    pricesLow: string;
-    pricesHigh: string;
-    pricesTypical: string;
-    goodTimeToBook: string;
-    highSaveUpTo: string;
-    cheaperHoursSuffix: string;
-    typicalAdvice: string;
-    minLabel: string;
-    avgLabel: string;
-    maxLabel: string;
-    noChartTitle: string;
-    noChartSubtitle: string;
-    tooltipHour: string;
-    tooltipPrice: string;
-  };
-};
-
-function getCurrencySymbol(currencyCode: string): string {
-  // Currency setting removed: always show USD symbol
-  void currencyCode;
-  return "$";
-}
-
-function clampNonZeroSeries(series: HourlyPricePoint[]): HourlyPricePoint[] {
-  const anyPositive = series.some((p) => p.price > 0);
-  return anyPositive ? series : [];
-}
+import { getCurrencySymbol, clampNonZeroSeries } from "@/utils";
+// Types are in @/types
 
 export function PriceChart({
   origin,

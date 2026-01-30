@@ -5,8 +5,7 @@ const AMADEUS_API_KEY = process.env.AMADEUS_API_KEY;
 const AMADEUS_SECRET_KEY = process.env.AMADEUS_SECRET_KEY;
 
 if (!AMADEUS_API_KEY || !AMADEUS_SECRET_KEY) {
-  // eslint-disable-next-line no-console
-  console.warn(
+  console.error(
     "[Amadeus] Missing AMADEUS_API_KEY or AMADEUS_SECRET_KEY in environment variables.",
   );
 }
@@ -17,65 +16,7 @@ const amadeus = new Amadeus({
   clientSecret: AMADEUS_SECRET_KEY,
 });
 
-type AmadeusFlightOffer = {
-  id: string;
-  price: {
-    total: string;
-    grandTotal?: string;
-    currency: string;
-  };
-  validatingAirlineCodes?: string[];
-  numberOfBookableSeats?: number;
-  travelerPricings?: Array<{
-    fareDetailsBySegment?: Array<{
-      cabin?: string; // e.g. ECONOMY, BUSINESS
-      brandedFare?: string; // e.g. BASIC_ECONOMY, ECONOMY, STANDARD
-      class?: string; // booking class
-    }>;
-  }>;
-  itineraries: Array<{
-    duration: string;
-    segments: Array<{
-      number?: string;
-      departure: { at: string; iataCode: string };
-      arrival: { at: string; iataCode: string };
-      aircraft?: { code?: string };
-    }>;
-  }>;
-};
-
-export type NormalizedSegment = {
-  from: string;
-  to: string;
-  departAt: string;
-  arriveAt: string;
-  flightNumber?: string;
-  aircraftCode?: string;
-  layoverMinutesAfter?: number; // minutes between this segment arrival and next segment departure
-};
-
-export type NormalizedFlight = {
-  id: string;
-  price: number;
-  currency: string;
-  airline: string;
-  flightNumber?: string;
-  stops: number;
-  stopLocations?: string[]; // Airport codes for layover stops
-  segments?: NormalizedSegment[];
-  cabin?: string;
-  fareType?: "Basic economy" | "Standard" | "Unknown";
-  duration: string;
-  origin: string;
-  destination: string;
-  departureTime: string;
-  arrivalTime: string;
-};
-
-export type HourlyPricePoint = {
-  hour: string;
-  price: number;
-};
+// Types are now in @/types
 
 function formatDuration(duration: string): string {
   // Duration format: "PT2H30M" -> "2h 30m"

@@ -1,28 +1,7 @@
 "use client";
 
 import { useState, type ChangeEvent, type FormEvent } from "react";
-
-export type SearchFormValues = {
-  origin: string;
-  destination: string;
-  departureDate: string;
-};
-
-type SearchPanelProps = {
-  defaultValues?: SearchFormValues;
-  onSearch?: (values: SearchFormValues) => void;
-  isLoading?: boolean;
-  t?: {
-    from: string;
-    to: string;
-    departure: string;
-    search: string;
-    searching: string;
-    cityOrAirport: string;
-    swapAria: string;
-    tip: string;
-  };
-};
+// Types are in @/types
 
 const getDefaultDepartureDate = () =>
   new Date().toISOString().slice(0, 10);

@@ -1,26 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  SearchPanel,
-  type SearchFormValues,
-} from "@/components/ui/SearchPanel";
-import {
-  PriceChart,
-  type HourlyPricePoint,
-} from "@/components/ui/PriceChart";
+import { SearchPanel } from "@/components/ui/SearchPanel";
+import { PriceChart } from "@/components/ui/PriceChart";
 import { FlightResults } from "@/components/ui/FlightResults";
-import { type FilterState } from "@/components/ui/Filters";
 import { FilterChips } from "@/components/ui/FilterChips";
-import { type NormalizedFlight } from "@/lib/api/amadeus";
 import {
   loadSettings,
   saveSettings,
   SettingsPanel,
-  type AppSettings,
 } from "@/components/ui/SettingsPanel";
 import { STRINGS } from "@/lib/i18n";
-
 // Currency setting removed: always display USD ($)
 
 export default function Home() {

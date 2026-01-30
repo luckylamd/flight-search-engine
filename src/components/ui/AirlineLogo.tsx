@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-type AirlineLogoProps = {
-  airline: string;
-  className?: string;
-};
+// Types are in @/types
 
 // Map common airline names/codes to their IATA codes for logo fetching
 const getAirlineCode = (airline: string): string => {

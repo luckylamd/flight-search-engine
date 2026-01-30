@@ -1,20 +1,7 @@
 "use client";
 
-import { type NormalizedFlight } from "@/lib/api/amadeus";
 import { useMemo, useState, useEffect } from "react";
-
-export type FilterState = {
-  stops: number | null; // null = all, 0 = nonstop, 1 = 1 stop, 2 = 2+ stops
-  priceRange: [number, number] | null;
-  airlines: string[];
-};
-
-type FiltersProps = {
-  flights: NormalizedFlight[];
-  onFilterChange: (filters: FilterState) => void;
-  activeFilterType?: "stops" | "price" | "airlines" | null;
-  onClose?: () => void;
-};
+// Types are in @/types
 
 export function Filters({
   flights,
